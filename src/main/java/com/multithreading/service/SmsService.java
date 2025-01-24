@@ -1,4 +1,4 @@
-package com.multithreading.service;
+package com.huawei.service;
 
 import org.springframework.stereotype.Service;
 

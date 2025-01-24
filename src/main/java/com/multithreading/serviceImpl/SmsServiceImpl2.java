@@ -1,6 +1,6 @@
-package com.multithreading.serviceImpl;
+package com.huawei.serviceImpl;
 
-import com.multithreading.service.SmsService;
+import com.huawei.service.SmsService;
 import org.springframework.stereotype.Service;
 
 /**

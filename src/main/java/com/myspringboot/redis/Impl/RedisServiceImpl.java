@@ -28,6 +28,9 @@ public class RedisServiceImpl implements RedisService {
     @Autowired
     private ProductDao productDao;
 
+
+
+
     @Override
     public void addString() {
         //设置值

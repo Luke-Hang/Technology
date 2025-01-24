@@ -8,13 +8,13 @@ import java.util.concurrent.*;
  * @create 2022-09-28 8:47
  * 构建一个并发的缓存组件三
  */
-public class Memoizer3<A, V> implements com.huawei.Memoizer.Computable<A, V> {
+public class Memoizer3<A, V> implements Computable<A, V> {
 
     private final Map<A, Future<V>> cache = new ConcurrentHashMap<>();
 
-    private final com.huawei.Memoizer.Computable<A, V> c;
+    private final Computable<A, V> c;
 
-    public Memoizer3(com.huawei.Memoizer.Computable<A, V> c) {
+    public Memoizer3(Computable<A, V> c) {
         this.c = c;
     }
 

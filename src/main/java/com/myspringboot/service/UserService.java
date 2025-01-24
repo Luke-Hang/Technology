@@ -30,4 +30,6 @@ public interface UserService {
     public Map<String,Object> updateName(@PathVariable("userName") String userName);
 
     UserModel findUser(String id);
+
+//    List
 }

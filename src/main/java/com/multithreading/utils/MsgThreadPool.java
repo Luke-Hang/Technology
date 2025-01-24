@@ -12,12 +12,10 @@ public class MsgThreadPool {
 
 	public static ThreadPoolTaskExecutor getPoolInstanc() {
 /*		java线程池如何合理配置核心线程数
-			1.获取机器的CPU核数cpuNum，：int cpuNum = Runtime.getRuntime().availableProcessors();
+			1.获取机器的CPU核数，：int n = Runtime.getRuntime().availableProcessors();
 			2.判断线程池处理的程序是CPU密集型，还是IO密集型
-				IO密集型(读写密集型):   核心线程数 = CPU核数cpuNum * 2=2cpuNum
-				CPU密集型(计算密集型):  核心线程数 = CPU核数cpuNum + 1=cpuNum+1
-
-				先设置核心线程数和最大线程数为2cpuNum，经调试发现核心线程数=cpuNum的时候，性能最优
+				IO密集型(读写密集型):   核心线程数 = CPU核数 * 2=2n
+				CPU密集型(计算密集型):  核心线程数 = CPU核数 + 1=n+1
 			*/
 		//获取CPU核数
 		int cpuNum = Runtime.getRuntime().availableProcessors();
@@ -52,10 +50,10 @@ public class MsgThreadPool {
 			executor.initialize();
 			return executor;
 		} catch (Exception e) {
-			executor.setCorePoolSize(cpuNum);
-			executor.setMaxPoolSize(2*cpuNum);
+			executor.setCorePoolSize(3);
+			executor.setMaxPoolSize(5);
 			executor.setKeepAliveSeconds(60);
-			executor.setQueueCapacity(500);
+			executor.setQueueCapacity(20);
 			executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
 /*			unsigned
