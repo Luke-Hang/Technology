@@ -62,9 +62,9 @@ public class baseSiteServiceImpl implements baseSiteService {
 //                executor.execute(new TranData(baseSiteModel, baseSiteList, countDownLatch));
             }
             //当计数器countDownLatch不为0时，调用await()使主线程处于阻塞状态，等待数据入库的所有参与者执行结束，再执行主线程
+            //当计数器的值变为 0 时，在 CountDownLatch 上 await() 的线程就会被唤醒
             countDownLatch.await();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -73,6 +73,7 @@ public class baseSiteServiceImpl implements baseSiteService {
     @Data
     private final class TranData implements Runnable {
 
+        //使用构造方法注入
         private BaseSiteModel baseSiteModel;
         private List<BaseSiteModel> listMap;
         private CountDownLatch countDownLatch;
@@ -96,9 +97,11 @@ public class baseSiteServiceImpl implements baseSiteService {
             try {
                 saveSiteDatas(baseSiteModel, listMap, countDownLatch);
             } catch (Exception e) {
-                // TODO: handle exception
+                e.printStackTrace();
             } finally {
                 //调用countDownLatch countDown()方法将计数器countDownLatch-1，标记已经完成一个任务
+                //问题：多线程内的代码在执行报错时抛出异常未被正确处理, 导致无法执行到countDown()方法？
+                //解决方案: 多线程执行逻辑使用try-catch结构,countDown()放到finally块中执行
                 countDownLatch.countDown();
             }
         }

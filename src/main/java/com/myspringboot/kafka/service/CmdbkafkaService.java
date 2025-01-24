@@ -27,7 +27,7 @@ public class CmdbkafkaService {
      * @param key
      * Kafka如何保证消息的消费顺序？ 发送消息的时候指定 key/Partition
      * Kafka 如何保证消息不丢失？
-     *  1.生产者丢失消息 添加回调函数future.addCallback()检查消息是否发送成功，如果发送失败，则重试
+     *  1.生产者丢失消息 添加回调函数future.addCallback()检查消息是否发送成功，如果发送失败，则重试.
      *  2.消费者丢失消息 消费者ACK机制，消费者在成功处理一条消息后，应向Kafka发送ACK确认，Kafka接收到ACK后才会删除该消息。
      *      如果未收到ACK，Kafka可以在消费者下次请求时重新发送消息，这样即使消费者端出现问题，消息也不会丢失。
      *  3.Kafka丢失消息

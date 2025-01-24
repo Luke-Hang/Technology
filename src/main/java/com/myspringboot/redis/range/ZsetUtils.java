@@ -53,7 +53,7 @@ public class ZsetUtils {
     }
 
     /**
-     * 获取排名
+     * 获取排行榜排名，rank(sortedSetKey, member)
      *
      * @param sortedSetKey key（用于区分不同的排行榜）
      * @param member       排行榜对象

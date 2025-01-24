@@ -8,12 +8,12 @@ import java.util.concurrent.*;
  * @create 2022-09-28 9:25
  * Memoizer的最终实现
  */
-public class Memoizer<A, V> implements Computable<A, V> {
+public class Memoizer<A, V> implements com.huawei.Memoizer.Computable<A, V> {
     private final Map<A, Future<V>> cache = new ConcurrentHashMap<>();
 
-    private final Computable<A, V> c;
+    private final com.huawei.Memoizer.Computable<A, V> c;
 
-    public Memoizer(Computable<A, V> c) {
+    public Memoizer(com.huawei.Memoizer.Computable<A, V> c) {
         this.c = c;
     }
 

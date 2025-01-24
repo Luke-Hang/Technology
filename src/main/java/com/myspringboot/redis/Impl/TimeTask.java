@@ -27,7 +27,7 @@ public class TimeTask {
     private RedisService redisService;
 
     /**
-     * 过期时间，设置
+     * 设置过期时间，单位默认为秒，此处设置默认事件为3600秒
      **/
     @Value("${spring.redis.expirationTime}")
     private int expirationTime;

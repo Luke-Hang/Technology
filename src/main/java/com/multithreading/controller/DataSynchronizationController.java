@@ -1,7 +1,7 @@
 package com.multithreading.controller;
 
-import com.huawei.service.SmsService;
 import com.multithreading.model.BaseSiteModel;
+import com.multithreading.service.SmsService;
 import com.multithreading.service.baseSiteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
