@@ -137,7 +137,8 @@ public class TimeTaskByRedis {
                         break; // 锁已被其他线程抢占
                     }
                 } catch (InterruptedException e) {
-                    break; // 中断续期线程
+                    // 中断续期线程
+                    break;
                 }
             }
         });
