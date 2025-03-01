@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="854aea2f-40a9-4e26-ae1c-08c18bc8160d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myspringboot/redis/Impl/TimeTaskByRedis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myspringboot/redis/Impl/TimeTaskByRedis.java" afterDir="false" />
-    </list>
+    <list default="true" id="854aea2f-40a9-4e26-ae1c-08c18bc8160d" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -80,7 +77,7 @@
     "project.structure.last.edited": "Project",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
-    "settings.editor.selected.configurable": "com.gitee.ui.GiteeSettingsConfigurable",
+    "settings.editor.selected.configurable": "vcs.Git",
     "spring.configuration.checksum": "e7e767d7c0e58b16e57d3ab16150db80",
     "vue.rearranger.settings.migration": "true"
   }
@@ -228,7 +225,7 @@
       <workItem from="1740137708582" duration="661000" />
       <workItem from="1740148164648" duration="1408000" />
       <workItem from="1740809644391" duration="9069000" />
-      <workItem from="1740820890861" duration="323000" />
+      <workItem from="1740820890861" duration="541000" />
     </task>
     <task id="LOCAL-00001" summary="1">
       <option name="closed" value="true" />
