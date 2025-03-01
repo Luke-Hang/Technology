@@ -130,7 +130,7 @@ public class TimeTaskByRedis {
                     // 检查锁是否仍然存在
                     if (SCHEDULED_ENV_LOCK.equals(jedisCluster.get(key))) {
                         // 设置延长锁的过期时间，延长过期时间360000/1000=36毫秒
-                        jedisCluster.expire(key, expirationTime / 1000);
+                        jedisCluster.expire(key, expirationTime /1000);
                         //通过 Thread.sleep 等待一段时间后再次续期，确保分布式锁在任务执行期间不会过期。
                         Thread.sleep(RENEWAL_INTERVAL); // 等待一段时间5秒再续期
                     } else {
