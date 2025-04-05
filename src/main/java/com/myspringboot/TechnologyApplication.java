@@ -1,5 +1,6 @@
 package com.myspringboot;
 
+import com.myspringboot.springcloud.model.Dept;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 //开启自动配置
@@ -16,10 +17,4 @@ public class TechnologyApplication {
         SpringApplication.run(TechnologyApplication.class, args);
     }
 
-//    @Bean
-//    //多节点负载均衡
-//    @LoadBalanced
-//    public RestTemplate restTemplate(){
-//        return new RestTemplate();
-//    }
 }

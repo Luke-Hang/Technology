@@ -1,4 +1,4 @@
-package com.myspringboot.springcloud.fegin;
+package com.fegin;
 
 import com.myspringboot.springcloud.model.Dept;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +27,8 @@ public class FeginController {
 
     @RequestMapping(value = "/consumer/dept/list")
     public List<Dept> list() {
+        //先调用controller层的list(),再调用feginService.list()
+        //该方法会通过fegin自动调用MICROSERVICECLOUD-DEPT服务的/dept/list方法
         return feginService.list();
     }
 

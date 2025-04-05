@@ -1,4 +1,4 @@
-package com.myspringboot.springcloud.Ribbon;
+package com.Ribbon;
 
 import com.myspringboot.springcloud.model.Dept;
 import org.springframework.beans.factory.annotation.Autowired;
