@@ -1,17 +1,23 @@
 package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.StaticMapper;
+import com.multithreading.model.AAUModel;
+import com.multithreading.model.AirCondition;
 import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.OilModel;
 import com.multithreading.service.baseSiteService;
 import com.multithreading.utils.MsgThreadPool;
 import lombok.Data;
+import org.apache.ibatis.annotations.Insert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 /**
  * 利用多线程将数据插入库中
@@ -47,13 +53,14 @@ public class baseSiteServiceImpl implements baseSiteService {
             CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
 
             // 循环baseSiteList将数据插入库中
+            // 一个线程，执行一个基站的设备信息入库操作
             for (BaseSiteModel baseSiteModel : baseSiteList) {
                 //组装任务
                 TranData TranData= new TranData();
                 //入库对象
                 TranData.setBaseSiteModel(baseSiteModel);
                 //入库数据
-                TranData.setListMap(baseSiteList);
+                TranData.setBaseSiteModelList(baseSiteList);
                 //计数器
                 TranData.setCountDownLatch(countDownLatch);
 
@@ -74,14 +81,14 @@ public class baseSiteServiceImpl implements baseSiteService {
     private final class TranData implements Runnable {
 
         private BaseSiteModel baseSiteModel;
-        private List<BaseSiteModel> listMap;
+        private List<BaseSiteModel> baseSiteModelList;
         private CountDownLatch countDownLatch;
 
         // 提供构造方法
-        public TranData(BaseSiteModel baseSiteModel, List<BaseSiteModel> listMap,
+        public TranData(BaseSiteModel baseSiteModel, List<BaseSiteModel> baseSiteModelList,
                                CountDownLatch countDownLatch) {
             this.baseSiteModel = baseSiteModel;
-            this.listMap = listMap;
+            this.baseSiteModelList = baseSiteModelList;
             this.countDownLatch = countDownLatch;
         }
 
@@ -94,7 +101,7 @@ public class baseSiteServiceImpl implements baseSiteService {
         @Override
         public void run() {
             try {
-                saveSiteDatas(baseSiteModel, listMap, countDownLatch);
+                saveSiteDatas(baseSiteModelList);
             } catch (Exception e) {
                 // TODO: handle exception
             } finally {
@@ -104,13 +111,22 @@ public class baseSiteServiceImpl implements baseSiteService {
         }
 
         /**
-         * @param baseSiteModel2
-         * @param listMap2
-         * @param countDownLatch2
+         *
+         * @param baseSiteModelList
          */
-        private void saveSiteDatas(BaseSiteModel baseSiteModel2, List<BaseSiteModel> listMap2,
-                                   CountDownLatch countDownLatch2) {
-            staticMapper.saveDta(listMap2);
+        private void saveSiteDatas(List<BaseSiteModel> baseSiteModelList) {
+            List<OilModel> oilModelList = baseSiteModelList.stream().map(
+                    BaseSiteModel::getOilModel).collect(Collectors.toList());
+
+            List<AirCondition> airConditionList = baseSiteModelList.stream().map(
+                    item -> item.getAirCondition()).collect(Collectors.toList());
+
+            List<AAUModel> aauModelList = baseSiteModelList.stream().map(
+                    BaseSiteModel::getAauModel).collect(Collectors.toList());
+
+            staticMapper.saveOilDateBatch(oilModelList);
+            staticMapper.saveAirConditionDataBatch(airConditionList);
+            staticMapper.saveAAUBatch(aauModelList);
         }
     }
 }

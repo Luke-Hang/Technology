@@ -1,7 +1,7 @@
 package com.multithreading.controller;
 
-import com.huawei.service.SmsService;
 import com.multithreading.model.BaseSiteModel;
+import com.multithreading.service.SmsService;
 import com.multithreading.service.baseSiteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -24,6 +24,7 @@ public class DataSynchronizationController {
 	private baseSiteService baseSiteService;
 	
 	@Autowired
+	//@Qualifier 存在多个相同类型的bean时，明确指定应该注入哪个具体的bean
 	@Qualifier(value = "smsServiceImpl1")
 	private SmsService smsService;
 

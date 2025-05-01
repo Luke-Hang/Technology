@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.multithreading.dao.StaticMapper">
+
+    <insert id="saveOilDateBatch">
+        insert into oil_table(oil_date,oil_price,oil_type,oil_city,oil_station,oil_address,oil_phone,oil_time,oil_source)
+        values
+        <foreach collection="oilList" item="item" index="index" separator=",">
+            (#{item.oilDate},#{item.oilPrice},#{item.oilType},#{item.oilCity},#{item.oilStation},#{item.oilAddress},#{item.oilPhone},#{item.oilTime},#{item.oilSource})
+       </foreach>
+    </insert>
+    <insert id="saveAirConditionDataBatch">
+        into air_condition_table(air_date,air_city,air_station,air_pm25,air_pm10,air_so2,air_no2,air_co,air_o3,air_quality,air_aqi,air_source)
+        values
+        <foreach collection="airConditionList" item="item" index="index" separator=",">
+            (#{item.airDate},#{item.airCity},#{item.airStation},#{item.airPm25},#{item.air})
+        </foreach>
+    </insert>
+
+    <insert id="saveAAUBatch">
+        into aau_table(aau_date,aau_city,aau_station,aau_pm25,aau_pm10,aau_so2,aau_no2,aau_co,aau_o3,aau_quality,aau_aqi,aau_source)
+        values
+        <foreach collection="aauList" item="item" index="index" separator=",">
+            (#{item.aauDate},#{item.aauCity},#{item.aauStation},#{item.aauPm25},#{item.aauPm10})
+        </foreach>
+    </insert>
+</mapper>
