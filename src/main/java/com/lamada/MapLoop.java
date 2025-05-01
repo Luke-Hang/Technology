@@ -93,9 +93,9 @@ public class MapLoop {
      */
     private static void objectListToMap2(){
         List<Person> list = new ArrayList<>();
-        list.add(new Person(100, "zhangsan", 20));
-        list.add(new Person(200, "lisi", 30));
-        list.add(new Person(300, "wangwu", 40));
+        list.add(new Person("100", "zhangsan",20));
+        list.add(new Person("200", "lisi",30));
+        list.add(new Person("300", "wangwu",40));
         //Collectors.toMap(k, value),person.getName()作为map的key,person作为map的value
         Map<String, Person> personMap = list.stream().collect(Collectors.toMap(person -> person.getName(), person -> person));
         System.out.println(personMap);

@@ -13,10 +13,10 @@ import java.util.List;
 public class ListObjectLoop {
     public static void main(String[] args) {
         List<Person> persons = new ArrayList<>();
-        persons.add(new Person(2,"lisi",21));
-        persons.add(new Person(3,"wangwu",22));
-        persons.add(new Person(1,"zhangsan",20));
-        persons.add(new Person(4,"zhaoliu",23));
+        persons.add(new Person("2","lisi",21));
+        persons.add(new Person("3","wangwu",22));
+        persons.add(new Person("1","zhangsan",20));
+        persons.add(new Person("4","zhaoliu",23));
 
 //        removeIf(persons);
         sort(persons);

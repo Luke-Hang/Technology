@@ -31,7 +31,7 @@ public class TimeTaskByRedis {
      * 设置锁的初始过期时间（毫秒）
      **/
     @Value("${spring.jedis.expirationTime}")
-    private int expirationTime;
+    private int expirationTime=30000;
 
     /**
      * 设置锁续期间隔（毫秒）
