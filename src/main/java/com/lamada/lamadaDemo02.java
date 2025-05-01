@@ -21,10 +21,7 @@ public class lamadaDemo02 {
         list.add(person2);
         list.add(person3);
         list.add(person4);
-
         changeAge(list);
-
-
     }
 
     private static void changeAge(List<Person> list) {
