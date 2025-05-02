@@ -192,6 +192,13 @@
             <artifactId>redisson-spring-boot-starter</artifactId>
             <version>3.21.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.6.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <!-- Spring Boot 的 plugin 用于自动配置一些打包细节 -->

@@ -48,14 +48,12 @@ public class CmdbkafkaService {
      *  死信队列：当消息进入队列后，消费者会尝试处理它。如果处理失败，或者超过一定的重试次数仍无法被成功处理，
      *          消息可以发送到死信队列中，而不是被永久性地丢弃
      *
-     * @param data
      */
 
 
     // 2. 创建 Kafka Consumer 实例
-
-    public void sendMessage(String topic, String key, String data) {
-        final ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, data);
+    public void sendMessage(String topic, String key, String value) {
+        final ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, value);
 
         if (future != null) {
             future.addCallback(result -> logger.info("生产者成功发送消息到topic:{} partition:{}的消息",

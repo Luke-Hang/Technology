@@ -7,13 +7,23 @@ import java.util.List;
 @Data
 public class BaseSiteModel {
 
+    //天线
     List<Antenna> antennaList;
+
+    //电池
+    List<Power> powerList;
+
+    //抱杆
+    List<HoldingPole> holdingPoleList;
 
     //AAU
     List<AAUModel> aauModelList;
 
-    //AAU
+    //BBU
     List<BBUModel> bbuModelList;
+
+    //RRu
+    List<RRUModel> rruModelList;
 
     //油机
     List<OilModel> oilModelList;

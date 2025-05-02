@@ -18,7 +18,7 @@ public class KafkaController {
     private CmdbkafkaService cmdbkafkaService;
 
     @RequestMapping("/sendMessage")
-    public void sendMessage(String topic, String message) {
-        cmdbkafkaService.sendMessage("topic", String.valueOf(UUID.randomUUID()), "data");
+    public void sendMessage(String topic, String value) {
+        cmdbkafkaService.sendMessage(topic, String.valueOf(UUID.randomUUID()), value);
     }
 }
