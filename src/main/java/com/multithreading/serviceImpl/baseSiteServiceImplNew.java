@@ -37,7 +37,7 @@ public class baseSiteServiceImplNew implements baseSiteService {
             List<BaseSiteModel> synBaseSiteList = Collections.synchronizedList(list);
 
             // 获取线程池实例 MsgThreadPool。
-            ThreadPoolTaskExecutor executor = MsgThreadPool.getPoolInstanc();
+            ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstanc();
 
             //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
             //计数器countDownLatch，数量设为数据集合的长度
@@ -48,12 +48,13 @@ public class baseSiteServiceImplNew implements baseSiteService {
                 // 每条基站数据封装成任务提交线程池，异步执行 saveSiteDatas() 入库
                 // executor 异步执行 提交的Runnable 任务 synBaseSiteModel
                 /**
-                 * 调用 execute(Runnable) 方法时，该方法会立即返回，不会阻塞调用方线程等待任务完成，即不会阻塞当前循环等待其完成
+                 * 调用 execute(Runnable) 方法时，该方法会立即返回，不会阻塞调用线程等待任务完成，即不会阻塞当前循环等待其完成
                  * 相反，它会将任务放入线程池的任务队列中或者直接由一个空闲的工作线程执行
-                 * 这种非阻塞特性使得调用方可以继续执行后续代码，即可以继续执行下一个循环
-                 * 无需等待当前循环任务执行完毕，实现了异步执行的效果。
+                 * 这种非阻塞特性使得调用方可以继续执行后续代码，无需等待当前循环任务执行完毕，实现了异步执行的效果。
+                 * 即可以继续执行下一个循环,无需等待当前循环执行完毕。
+                 *
                  */
-                executor.execute(() -> {
+                threadPoolInstance.execute(() -> {
                     try {
                         saveSiteData(synBaseSiteModel);
                     } catch (Exception e) {
