@@ -1,26 +1,32 @@
 package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.StaticMapper;
-import com.multithreading.model.AAUModel;
-import com.multithreading.model.AirCondition;
 import com.multithreading.model.BaseSiteModel;
-import com.multithreading.model.OilModel;
 import com.multithreading.service.baseSiteService;
 import com.multithreading.utils.MsgThreadPool;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.ibatis.annotations.Insert;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.stream.Collectors;
 
 /**
  * 利用多线程将数据插入库中
+ * <p>
+ * 该函数的主要功能是使用多线程将基站数据批量插入数据库，具体逻辑如下：
+ * 1.接收一个包含基站数据的列表 list。
+ * 2.将列表转为线程安全的 synchronizedList。
+ * 3.获取线程池实例 MsgThreadPool，用于管理线程执行任务。
+ * 4.使用 CountDownLatch 控制主线程等待所有子线程执行完毕。
+ * 5.遍历数据列表，每个对象封装成 TranData 任务提交给线程池异步执行入库操作。
+ * 6.每个线程执行完后调用 countDown()，主线程调用 await() 等待全部完成。
+ * 7.实际入库方法：saveSiteDatas() 调用 DAO 层批量插入不同类型的数据。
+ * ✅ 总结：利用线程池并发处理数据入库，提高效率，并保证主线程等待所有入库完成。
  */
 @Service
 public class baseSiteServiceImpl implements baseSiteService {
@@ -52,56 +58,40 @@ public class baseSiteServiceImpl implements baseSiteService {
             //计数器countDownLatch，数量设为数据集合的长度
             CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
 
-            // 循环baseSiteList将数据插入库中
-            // 一个线程，执行一个基站的设备信息入库操作
+            // 循环baseSiteList将数据插入库中,每个线程执行一个基站设备信息入库操作
             for (BaseSiteModel baseSiteModel : baseSiteList) {
                 //组装任务
-                TranData TranData= new TranData();
+                TaskData taskData = new TaskData();
                 //入库对象
-                TranData.setBaseSiteModel(baseSiteModel);
-                //入库数据
-                TranData.setBaseSiteModelList(baseSiteList);
+                taskData.setBaseSiteModel(baseSiteModel);
                 //计数器
-                TranData.setCountDownLatch(countDownLatch);
-
-                //执行任务：executor.execute(TranData)线程池实例executor执行提交过来的任务TranData
-                executor.execute(TranData);
-//                executor.execute(new TranData(baseSiteModel, baseSiteList, countDownLatch));
+                taskData.setCountDownLatch(countDownLatch);
+                // executor 异步执行 提交的Runnable 任务 TranData
+                executor.execute(taskData);
             }
             //当计数器countDownLatch不为0时，调用await()使主线程处于阻塞状态，等待数据入库的所有参与者执行结束，再执行主线程
             countDownLatch.await();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     //将数据插入数据库操作做成一个多线程任务
     @Data
-    private final class TranData implements Runnable {
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private final class TaskData implements Runnable {
 
         private BaseSiteModel baseSiteModel;
-        private List<BaseSiteModel> baseSiteModelList;
         private CountDownLatch countDownLatch;
 
-        // 提供构造方法
-        public TranData(BaseSiteModel baseSiteModel, List<BaseSiteModel> baseSiteModelList,
-                               CountDownLatch countDownLatch) {
-            this.baseSiteModel = baseSiteModel;
-            this.baseSiteModelList = baseSiteModelList;
-            this.countDownLatch = countDownLatch;
-        }
 
         //无参构造
-        public TranData() {
-
-        }
-
         // 数据插入数据库多线程操作任务
         @Override
         public void run() {
             try {
-                saveSiteDatas(baseSiteModelList);
+                saveSiteDatas(baseSiteModel);
             } catch (Exception e) {
                 // TODO: handle exception
             } finally {
@@ -111,22 +101,14 @@ public class baseSiteServiceImpl implements baseSiteService {
         }
 
         /**
-         *
-         * @param baseSiteModelList
+         * @param baseSiteModel
          */
-        private void saveSiteDatas(List<BaseSiteModel> baseSiteModelList) {
-            List<OilModel> oilModelList = baseSiteModelList.stream().map(
-                    BaseSiteModel::getOilModel).collect(Collectors.toList());
-
-            List<AirCondition> airConditionList = baseSiteModelList.stream().map(
-                    item -> item.getAirCondition()).collect(Collectors.toList());
-
-            List<AAUModel> aauModelList = baseSiteModelList.stream().map(
-                    BaseSiteModel::getAauModel).collect(Collectors.toList());
-
-            staticMapper.saveOilDateBatch(oilModelList);
-            staticMapper.saveAirConditionDataBatch(airConditionList);
-            staticMapper.saveAAUBatch(aauModelList);
+        private void saveSiteDatas(BaseSiteModel baseSiteModel) {
+            staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
+            staticMapper.saveAAUBatch(baseSiteModel.getAauModelList());
+            staticMapper.saveBBUBatch(baseSiteModel.getBbuModelList());
+            staticMapper.saveOilDateBatch(baseSiteModel.getOilModelList());
+            staticMapper.saveAirConditionDataBatch(baseSiteModel.getAirConditionList());
         }
     }
 }

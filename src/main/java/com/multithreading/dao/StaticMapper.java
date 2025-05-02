@@ -2,10 +2,7 @@ package com.multithreading.dao;
 
 import java.util.List;
 
-import com.multithreading.model.AAUModel;
-import com.multithreading.model.AirCondition;
-import com.multithreading.model.BaseSiteModel;
-import com.multithreading.model.OilModel;
+import com.multithreading.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Component;
@@ -19,9 +16,15 @@ import org.springframework.stereotype.Component;
 @Mapper
 public interface StaticMapper {
 
+	void saveAntennaBatch(@Param("antennaList") List<Antenna> antennaList);
+
+	void saveAAUBatch(@Param("aauList") List<AAUModel> aauModelList);
+
+	void saveBBUBatch(@Param("bbuList") List<BBUModel> bbuModelList);
+
 	void saveOilDateBatch(@Param("oilList") List<OilModel> oilModelList);
 
 	void saveAirConditionDataBatch(@Param("airConditionList") List<AirCondition> airConditionList);
 
-	void saveAAUBatch(@Param("aauList") List<AAUModel> aauModelList);
+
 }

@@ -7,12 +7,17 @@ import java.util.List;
 @Data
 public class BaseSiteModel {
 
-    String siteId;
+    List<Antenna> antennaList;
 
-    OilModel oilModel;
+    //AAU
+    List<AAUModel> aauModelList;
 
-    AirCondition airCondition;
+    //AAU
+    List<BBUModel> bbuModelList;
 
-    AAUModel aauModel;
+    //油机
+    List<OilModel> oilModelList;
 
+    //空调
+    List<AirCondition> airConditionList;
 }
