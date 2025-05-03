@@ -10,7 +10,7 @@ public class MsgThreadPool {
 	//Spring提供的线程池ThreadPoolTaskExecutor
 	private static ThreadPoolTaskExecutor executor=null;
 
-	public static ThreadPoolTaskExecutor getPoolInstanc() {
+	public static ThreadPoolTaskExecutor getPoolInstance() {
 /*		java线程池如何合理配置核心线程数
 			1.获取机器的CPU核数，：int n = Runtime.getRuntime().availableProcessors();
 			2.判断线程池处理的程序是CPU密集型，还是IO密集型
@@ -25,7 +25,7 @@ public class MsgThreadPool {
 			executor.setCorePoolSize(cpuNum);
 			//设置最大线程数
 			executor.setMaxPoolSize(2*cpuNum);
-			//设置阻塞队列大小
+			//设置阻塞队列大小为500，表示有界队列
 			executor.setQueueCapacity(500);
 			/**
 			 * 线程池队列：https://blog.csdn.net/qq_39666711/article/details/140486386
@@ -34,7 +34,7 @@ public class MsgThreadPool {
 			 * 		用于任务量非常大，且任务执行时间较长，LinkedBlockingQueue 不指定容量或指定容量为Integer.MAX_VALUE
 			 * 	2、有界队列：
 			 * 		队列有一个固定的容量限制，当队列满时，尝试添加新任务的操作会被阻塞，直到队列中有空间可用
-			 * 		ArrayBlockingQueue、LinkedBlockingQueue（指定具体容量）
+			 * 		ArrayBlockingQueue
 			 * 		适用于需要控制任务数量，防止资源耗尽的场景。通过调整队列大小和线程池大小，可以灵活控制任务的并发执行
 			 * 	3、直接提交队列（SynchronousQueue）：
 			 * 		这种队列实际上并不存储任何元素，要添加新任务必须得有空闲的线程才能添加
@@ -63,7 +63,7 @@ public class MsgThreadPool {
 			//设置线程池拒绝策略
 			/*https://blog.csdn.net/suifeng629/article/details/98884972
 			 * 如果线程到达 maximumPoolSize 仍然有新任务这时会执行拒绝策略。拒绝策略 jdk 提供了 4 种实现
-				1.AbortPolicy（中止策略，线程池默认拒绝策略--中止任务，抛出异常）：在任务不能再提交的时候，抛出异常，及时反馈程序运行状态。
+				1.AbortPolicy（中止策略，线程池默认拒绝策略--中止任务，抛出异常）：当任务不能再提交时，抛出异常，及时反馈程序运行状态。
 					* 如果是比较关键的业务，推荐使用此拒绝策略，在系统不能承载更大的并发量时，能够及时的通过异常发现。
 				2.CallerRunsPolicy(呼叫者运行策略--原调用线程处理)：由调用线程处理该任务
 					* 如果任务被拒绝了，则由原调用线程（提交任务的线程）直接执行此任务。

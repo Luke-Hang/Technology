@@ -37,7 +37,7 @@ public class baseSiteServiceImplNew implements baseSiteService {
             List<BaseSiteModel> synBaseSiteList = Collections.synchronizedList(list);
 
             // 获取线程池实例 MsgThreadPool。
-            ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstanc();
+            ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstance();
 
             //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
             //计数器countDownLatch，数量设为数据集合的长度
