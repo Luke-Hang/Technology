@@ -56,7 +56,7 @@ public class baseSiteServiceImplNew implements baseSiteService {
                  */
                 threadPoolInstance.execute(() -> {
                     try {
-                        saveSiteData(synBaseSiteModel);
+                        saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -72,7 +72,11 @@ public class baseSiteServiceImplNew implements baseSiteService {
         }
     }
 
-    private void saveSiteData(BaseSiteModel baseSiteModel) {
+    /**
+     * 数据批量入库
+     * @param baseSiteModel
+     */
+    private void saveBaseSiteData(BaseSiteModel baseSiteModel) {
         staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
         staticMapper.saveAAUBatch(baseSiteModel.getAauModelList());
         staticMapper.saveBBUBatch(baseSiteModel.getBbuModelList());
