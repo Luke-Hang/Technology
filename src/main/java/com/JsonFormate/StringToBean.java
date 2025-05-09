@@ -11,9 +11,9 @@ import java.io.IOException;
 public class StringToBean {
     public static void main(String[] args) {
         String jsonString = "{\"name\":\"John\", \"age\":30}";
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            MyBean myBean = mapper.readValue(jsonString, MyBean.class);
+            MyBean myBean = objectMapper.readValue(jsonString, MyBean.class);
             System.out.println(myBean);
         } catch (IOException e) {
             e.printStackTrace();

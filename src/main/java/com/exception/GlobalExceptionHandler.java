@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 
@@ -40,6 +39,11 @@ public class GlobalExceptionHandler {
     }
 
 
+    /**
+     * 处理sql异常
+     * @param e
+     * @return
+     */
     @ExceptionHandler(value = SQLException.class)
     @ResponseBody
     public ResultResponse sqlExceptionHandler(SQLException e) {
@@ -66,13 +70,12 @@ public class GlobalExceptionHandler {
     /**
      * 处理其他异常
      *
-     * @param request
      * @param e
      * @return
      */
     @ExceptionHandler(value = Exception.class)
     @ResponseBody
-    public ResultResponse exceptionHandler(HttpServletRequest request, Exception e) {
+    public ResultResponse exceptionHandler(Exception e) {
         logger.error("未知异常！原因是:", e);
         return ResultResponse.error(ExceptionEnum.INTERNAL_SERVER_ERROR);
     }
