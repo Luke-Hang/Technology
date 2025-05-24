@@ -7,7 +7,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 //创建线程池
 public class MsgThreadPool {
 
-	//Spring提供的线程池ThreadPoolTaskExecutor
+	//使用Spring提供的线程池ThreadPoolTaskExecutor
 	private static ThreadPoolTaskExecutor executor=null;
 
 	public static ThreadPoolTaskExecutor getPoolInstance() {

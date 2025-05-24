@@ -41,7 +41,7 @@ public class baseSiteServiceImplNew implements baseSiteService {
 
             //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
             //计数器countDownLatch，数量设为数据集合的长度
-            CountDownLatch countDownLatch = new CountDownLatch(synBaseSiteList.size());
+            final CountDownLatch countDownLatch = new CountDownLatch(synBaseSiteList.size());
 
             // 循环baseSiteList将数据插入库中,每个线程执行一个基站设备信息入库操作
             for (BaseSiteModel synBaseSiteModel : synBaseSiteList) {
