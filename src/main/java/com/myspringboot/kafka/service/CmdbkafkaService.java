@@ -52,8 +52,8 @@ public class CmdbkafkaService {
 
 
     // 2. 创建 Kafka Consumer 实例
-    public void sendMessage(String topic, String key, String value) {
-        final ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, value);
+    public void sendMessage(String topic, String key, String data) {
+        final ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, data);
 
         if (future != null) {
             future.addCallback(result -> logger.info("生产者成功发送消息到topic:{} partition:{}的消息",

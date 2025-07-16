@@ -12,7 +12,7 @@ spring:
     type-aliases-package: myspringboot.pojo
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9092,localhost:9093
     consumer:
       group-id: person-info-change-group
       auto-offset-reset: earliest
