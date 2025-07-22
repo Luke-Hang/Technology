@@ -1,4 +1,4 @@
-package com.huawei.model;
+package com.multithreading.model;
 
 /**
  * @author xiehang

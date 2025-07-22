@@ -1,4 +1,4 @@
-package com.huawei.model;
+package com.multithreading.model;
 
 import java.util.ArrayList;
 import java.util.Collections;

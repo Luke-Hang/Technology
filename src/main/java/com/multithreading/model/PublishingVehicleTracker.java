@@ -1,4 +1,4 @@
-package com.huawei.model;
+package com.multithreading.model;
 
 import java.util.Collections;
 import java.util.Map;

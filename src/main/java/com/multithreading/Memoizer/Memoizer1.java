@@ -1,4 +1,4 @@
-package com.huawei.Memoizer;
+package com.multithreading.Memoizer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,14 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @create 2022-09-27 12:03
  * 构建一个并发的缓存组件一
  */
-public class Memoizer1<A, V> implements Computable<A, V> {
+public class Memoizer1<A, V> implements com.huawei.Memoizer.Computable<A, V> {
 
     private final Map<A, V> cache = new HashMap<>();
 
-    private final Computable<A,V> c;
+    private final com.huawei.Memoizer.Computable<A,V> c;
 
     //构造方法对变量c初始化
-    public Memoizer1(Computable<A, V> c) {
+    public Memoizer1(com.huawei.Memoizer.Computable<A, V> c) {
         this.c = c;
     }
 
