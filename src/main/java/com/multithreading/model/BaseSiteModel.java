@@ -10,9 +10,6 @@ public class BaseSiteModel {
     //天线
     List<Antenna> antennaList;
 
-    //电池
-    List<Power> powerList;
-
     //抱杆
     List<HoldingPole> holdingPoleList;
 
@@ -24,6 +21,9 @@ public class BaseSiteModel {
 
     //RRu
     List<RRUModel> rruModelList;
+
+    //电池
+    List<Power> powerList;
 
     //油机
     List<OilModel> oilModelList;
