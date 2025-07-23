@@ -19,7 +19,7 @@ import java.util.concurrent.CountDownLatch;
  * 2.使用Collections.synchronizedList，将其转为线程安全的synBaseSiteList
  * 3.获取线程池实例 MsgThreadPool。
  * 4.使用 CountDownLatch 控制主线程等待所有子线程完成。
- * 5.每个数据封装成任务提交线程池，异步执行 saveSiteDatas() 入库
+ * 5.每个数据封装成任务提交线程池，异步执行 saveBaseSiteData() 入库
  * 6.调用countDownLatch countDown()方法将计数器count-1，标记已经完成一个任务，主线程 await() 等待全部完成。
  * 7.saveSiteData() 调用 DAO 层方法批量插入各类数据。
  * ✅ 总结：利用线程池并发处理数据入库，提高效率，并保证主线程等待所有入库完成。
@@ -77,10 +77,21 @@ public class baseSiteServiceImpl implements baseSiteService {
      * @param baseSiteModel
      */
     private void saveBaseSiteData(BaseSiteModel baseSiteModel) {
-        staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
-        staticMapper.saveAAUBatch(baseSiteModel.getAauModelList());
-        staticMapper.saveBBUBatch(baseSiteModel.getBbuModelList());
-        staticMapper.saveOilDateBatch(baseSiteModel.getOilModelList());
-        staticMapper.saveAirConditionDataBatch(baseSiteModel.getAirConditionList());
+        //天线
+        staticMapper.saveAntennaList(baseSiteModel.getAntennaList());
+        //抱杆
+        staticMapper.saveHoldingPoleList(baseSiteModel.getHoldingPoleList());
+        //5G AAU
+        staticMapper.saveAAUList(baseSiteModel.getAauModelList());
+        //5G BBU
+        staticMapper.saveBBUList(baseSiteModel.getBbuModelList());
+        //5G RRU
+        staticMapper.saveRRUList(baseSiteModel.getRruModelList());
+        //电源
+        staticMapper.savePowerList(baseSiteModel.getPowerList());
+        //空调
+        staticMapper.saveAirConditionList(baseSiteModel.getAirConditionList());
+        //油机
+        staticMapper.saveOilList(baseSiteModel.getOilModelList());
     }
 }

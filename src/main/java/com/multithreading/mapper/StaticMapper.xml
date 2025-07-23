@@ -4,7 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.multithreading.dao.StaticMapper">
 
-    <insert id="saveAntennaBatch">
+    <insert id="saveAntennaList">
         into aau_table(aau_date,aau_city,aau_station,aau_pm25,aau_pm10,aau_so2,aau_no2,aau_co,aau_o3,aau_quality,aau_aqi,aau_source)
         values
         <foreach collection="antennaList" item="item" index="index" separator=",">
@@ -13,7 +13,7 @@
     </insert>
 
 
-    <insert id="saveAAUBatch">
+    <insert id="saveAAUList">
         into aau_table(aau_date,aau_city,aau_station,aau_pm25,aau_pm10,aau_so2,aau_no2,aau_co,aau_o3,aau_quality,aau_aqi,aau_source)
         values
         <foreach collection="aauList" item="item" index="index" separator=",">
@@ -21,7 +21,7 @@
         </foreach>
     </insert>
 
-    <insert id="saveBBUBatch">
+    <insert id="saveBBUList">
         into bbu_table(aau_date,aau_city,aau_station,aau_pm25,aau_pm10,aau_so2,aau_no2,aau_co,aau_o3,aau_quality,aau_aqi,aau_source)
         values
         <foreach collection="bbuList" item="item" index="index" separator=",">
@@ -29,17 +29,41 @@
         </foreach>
     </insert>
 
-    <insert id="saveOilDateBatch">
+    <insert id="saveOilList">
         insert into oil_table(oil_date,oil_price,oil_type,oil_city,oil_station,oil_address,oil_phone,oil_time,oil_source)
         values
         <foreach collection="oilList" item="item" index="index" separator=",">
             (#{item.oilDate},#{item.oilPrice},#{item.oilType},#{item.oilCity},#{item.oilStation},#{item.oilAddress},#{item.oilPhone},#{item.oilTime},#{item.oilSource})
         </foreach>
     </insert>
-    <insert id="saveAirConditionDataBatch">
+    <insert id="saveAirConditionList">
         into air_condition_table(air_date,air_city,air_station,air_pm25,air_pm10,air_so2,air_no2,air_co,air_o3,air_quality,air_aqi,air_source)
         values
         <foreach collection="airConditionList" item="item" index="index" separator=",">
+            (#{item.airDate},#{item.airCity},#{item.airStation},#{item.airPm25},#{item.air})
+        </foreach>
+    </insert>
+
+    <insert id="saveHoldingPoleList">
+        into air_condition_table(air_date,air_city,air_station,air_pm25,air_pm10,air_so2,air_no2,air_co,air_o3,air_quality,air_aqi,air_source)
+        values
+        <foreach collection="holdingPoleList" item="item" index="index" separator=",">
+            (#{item.airDate},#{item.airCity},#{item.airStation},#{item.airPm25},#{item.air})
+        </foreach>
+    </insert>
+
+    <insert id="saveRRUList">
+        into air_condition_table(air_date,air_city,air_station,air_pm25,air_pm10,air_so2,air_no2,air_co,air_o3,air_quality,air_aqi,air_source)
+        values
+        <foreach collection="rruModelList" item="item" index="index" separator=",">
+            (#{item.airDate},#{item.airCity},#{item.airStation},#{item.airPm25},#{item.air})
+        </foreach>
+    </insert>
+
+    <insert id="savePowerList">
+        into air_condition_table(air_date,air_city,air_station,air_pm25,air_pm10,air_so2,air_no2,air_co,air_o3,air_quality,air_aqi,air_source)
+        values
+        <foreach collection="powerList" item="item" index="index" separator=",">
             (#{item.airDate},#{item.airCity},#{item.airStation},#{item.airPm25},#{item.air})
         </foreach>
     </insert>

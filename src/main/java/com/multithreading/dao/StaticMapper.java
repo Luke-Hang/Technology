@@ -16,15 +16,20 @@ import org.springframework.stereotype.Component;
 @Mapper
 public interface StaticMapper {
 
-	void saveAntennaBatch(@Param("antennaList") List<Antenna> antennaList);
+	void saveAntennaList(@Param("antennaList") List<Antenna> antennaList);
 
-	void saveAAUBatch(@Param("aauList") List<AAUModel> aauModelList);
+	void saveAAUList(@Param("aauList") List<AAUModel> aauModelList);
 
-	void saveBBUBatch(@Param("bbuList") List<BBUModel> bbuModelList);
+	void saveBBUList(@Param("bbuList") List<BBUModel> bbuModelList);
 
-	void saveOilDateBatch(@Param("oilList") List<OilModel> oilModelList);
+	void saveOilList(@Param("oilList") List<OilModel> oilModelList);
 
-	void saveAirConditionDataBatch(@Param("airConditionList") List<AirCondition> airConditionList);
+	void saveAirConditionList(@Param("airConditionList") List<AirCondition> airConditionList);
 
 
+	void saveHoldingPoleList(@Param("holdingPoleList") List<HoldingPole> holdingPoleList);
+
+	void saveRRUList(@Param("rruModelList") List<RRUModel> rruModelList);
+
+	void savePowerList(@Param("powerList") List<Power> powerList);
 }
