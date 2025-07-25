@@ -1,4 +1,4 @@
-package com.myspringboot.redis.raffle;
+package com.redis.raffle;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;

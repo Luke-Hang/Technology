@@ -1,6 +1,6 @@
-package com.myspringboot.redis.Impl;
+package com.redis.Impl;
 
-import com.myspringboot.redis.service.RedisService;
+import com.redis.service.RedisService;
 import org.redisson.Redisson;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;

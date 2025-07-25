@@ -1,4 +1,4 @@
-package com.myspringboot.redis.service;
+package com.redis.service;
 
 import com.myspringboot.model.UserModel;
 

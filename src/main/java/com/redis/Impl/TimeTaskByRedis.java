@@ -1,6 +1,6 @@
-package com.myspringboot.redis.Impl;
+package com.redis.Impl;
 
-import com.myspringboot.redis.service.RedisService;
+import com.redis.service.RedisService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
