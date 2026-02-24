@@ -1,5 +1,7 @@
 package com.myspringboot.kafka.service;
 
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,7 @@ public class CmdbkafkaService {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+
 
     /**
      * 发送消息
@@ -47,6 +50,10 @@ public class CmdbkafkaService {
      *
      * @param data
      */
+
+
+    // 2. 创建 Kafka Consumer 实例
+
     public void sendMessage(String topic, String key, String data) {
         final ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, data);
 

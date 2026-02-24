@@ -17,20 +17,27 @@ import redis.clients.jedis.JedisCluster;
  */
 @Configurable
 @Component
-public class TimeTask {
+public class TimeTaskByRedis {
 
-    private static final Logger logger = LoggerFactory.getLogger(TimeTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(TimeTaskByRedis.class);
 
     @Autowired
     private JedisCluster jedisCluster;
+
     @Autowired
     private RedisService redisService;
 
     /**
-     * 过期时间，设置
+     * 设置锁的初始过期时间（毫秒）
      **/
-    @Value("${spring.redis.expirationTime}")
+    @Value("${spring.jedis.expirationTime}")
     private int expirationTime;
+
+    /**
+     * 设置锁续期间隔（毫秒）
+     */
+    @Value("${spring.jedis.renewalTime}")
+    private long RENEWAL_INTERVAL;   // 续期间隔（毫秒）
 
     //定时任务开关名称
     private static String SCHEDULED_COMMON_STATUS = "scheduledCommonStatus";
@@ -38,6 +45,8 @@ public class TimeTask {
     //生成唯一的请求标识：在尝试获取锁之前，首先需要生成一个与本次请求相关的唯一标识，通常是包含客户端ID和时间戳的信息，确保这个值在分布式环境中是唯一的。
     //定时任务锁名称，也是唯一的请求标识
     private static String SCHEDULED_ENV_LOCK = "ScheduledEnvLock";
+
+
 
     /**
      * 定时任务，清理一年前的数据
@@ -52,16 +61,22 @@ public class TimeTask {
     @Scheduled
     public void deleteOverExes() {
         try {
-            //1.获取执行定时任务的开关状态scheduledTaskStatus
+            //获取执行定时任务的开关状态scheduledTaskStatus
             //定时任务开关为on的时候表示开关被打开，off时表示开关关闭
             String scheduledTaskStatus = null;
             if (jedisCluster != null) {
                 scheduledTaskStatus = jedisCluster.get(SCHEDULED_COMMON_STATUS);
             }
-            //2.定时任务开关状态处于打开状态，使用setnx尝试获取分布式锁
+            //定时任务开关状态处于打开状态，使用setnx尝试获取分布式锁
             if ("on".equals(scheduledTaskStatus)
                     && getNxScheduledTaskLock(SCHEDULED_ENV_LOCK, "on")) {
-                //3.执行删除任务
+
+                logger.info("获取 ScheduledEnvLock success");
+
+                //启动续期线程
+                startRenewalThread(SCHEDULED_ENV_LOCK);
+
+                //3.执行删除任务，假设删除操作耗时40000毫秒，超过初始锁的过期时间
                 redisService.deleteOverExes();
             }
         } catch (Exception e) {
@@ -69,12 +84,12 @@ public class TimeTask {
         } finally {
             //4.定时任务执行完，释放锁
             Long res = jedisCluster.del(SCHEDULED_ENV_LOCK);
-            logger.info("release clouddeployenvlock success");
+            logger.info("release ScheduledEnvLock success!");
         }
     }
 
     /**
-     * 使用setnx获取分布式锁
+     * 使用setnx获取分布式锁，同时设置所的过期时间
      * @param key
      * @param value
      * @return
@@ -100,5 +115,32 @@ public class TimeTask {
         //如果setnx可以正确set则返回1，此时1==1，返回true
         //如果setnx不可以正确set则返回其他值，此时!=1，返回false
         return result == 1;
+    }
+
+
+    /**
+     * 启动续期线程
+     * 自动续期机制：通过后台线程定期延长锁的过期时间，确保锁不会提前释放。
+     * @param key
+     */
+    private void startRenewalThread(String key) {
+        Thread renewalThread = new Thread(() -> {
+            while (true) {
+                try {
+                    // 检查锁是否仍然存在
+                    if (SCHEDULED_ENV_LOCK.equals(jedisCluster.get(key))) {
+                        // 设置延长锁的过期时间，延长过期时间360000/1000=36毫秒
+                        jedisCluster.expire(key, expirationTime /1000);
+                        //通过 Thread.sleep 等待一段时间后再次续期，确保分布式锁在任务执行期间不会过期。
+                        Thread.sleep(RENEWAL_INTERVAL); // 等待一段时间5秒再续期
+                    } else {
+                        break; // 锁已被其他线程抢占
+                    }
+                } catch (InterruptedException e) {
+                    break; // 中断续期线程
+                }
+            }
+        });
+        renewalThread.start();
     }
 }
