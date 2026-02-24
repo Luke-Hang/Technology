@@ -1,7 +1,6 @@
 package com.cashgenerator.utils;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,5 +28,21 @@ public class JwtUtils {
                 // 生成 JWT 签名验证 JWT 是否被篡改
                 .signWith(SignatureAlgorithm.HS512, jwtSecret)
                 .compact();
+    }
+
+    public boolean validateJwtToken(String authToken) {
+        try {
+            Jwts.parser().setSigningKey(this.jwtSecret).parseClaimsJws(authToken);
+            return true;
+        } catch (MalformedJwtException e) {
+            logger.error("Invalid JWT token: {}", e.getMessage());
+        } catch (ExpiredJwtException e) {
+            logger.error("JWT token is expired: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            logger.error("JWT token is Unsupported: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            logger.error("JWT claims  string is empty: {}", e.getMessage());
+        }
+        return false;
     }
 }

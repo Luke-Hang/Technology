@@ -12,4 +12,5 @@ public class LoginBo {
     private String customerAuthToken;
     private String appAuthToken;
     private Long storeId;
+    private LoginUserInfo loginUserInfo;
 }

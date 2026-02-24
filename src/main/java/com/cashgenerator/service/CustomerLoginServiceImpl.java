@@ -3,6 +3,7 @@ package com.cashgenerator.service;
 import com.cashgenerator.AuthenticationType;
 import com.cashgenerator.dao.AuthenticationMapper;
 import com.cashgenerator.model.LoginBo;
+import com.cashgenerator.model.LoginUserInfo;
 import com.cashgenerator.model.UserAuthentication;
 import com.cashgenerator.utils.JwtUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,9 +30,10 @@ public class CustomerLoginServiceImpl implements CustomerLoginService{
     public LoginBo validateCustomer(LoginBo loginBo, AuthenticationType authenticationType) {
         if (loginBo != null) {
             createTokenList(loginBo);
-
+            LoginUserInfo loginUserInfo = getLoginUserInfo();
+            loginBo.setLoginUserInfo(loginUserInfo);
         }
-        return null;
+        return loginBo;
     }
 
     private void createTokenList(LoginBo loginBo) {
@@ -49,20 +51,23 @@ public class CustomerLoginServiceImpl implements CustomerLoginService{
         //服务端 token，标识服务权限
         String appAuthToken = jwtUtils.generateJwtToken(loginBo.getLoginName(), "app_auth_token", "customer_services");
 
+        //生成 uuid作为内部 token 标识
         UUID uuid = UUID.randomUUID();
         authentication.setUserId(loginBo.getLoginId());
-        authentication.setToken(uuid.toString());
-
+        authentication.setToken(uuid.toString());//uuid token
         loginBo.setToken(authentication.getToken());
-
         authentication.setStoreId(loginBo.getStoreId());
         authentication.setValid(true);
+        authenticationMapper.save(authentication);//入库
 
-        authenticationMapper.save(authentication);
-
+        //设置 loginBo 的 token 信息
         loginBo.setToken(uuid.toString());
         loginBo.setCustomerAuthToken(customerAuthToken);
         loginBo.setAppAuthToken(appAuthToken);
+    }
 
+    private LoginUserInfo getLoginUserInfo() {
+        LoginUserInfo loginUserInfo = new LoginUserInfo();
+        return loginUserInfo;
     }
 }
