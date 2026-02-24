@@ -31,16 +31,22 @@ public class KafkaProducerConfig {
     @Bean
     protected Map<String,Object> hisProducerConfigs(){
         Map<String, Object> props = new HashMap<>();
-        //props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootstrapServers);// 指定 Kafka 集群的地址
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");// Kafka集群的地址列表
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootstrapServers);// 指定 Kafka 集群的地址
+        //props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");// Kafka集群的地址列表
         //指定键和值的序列化方式，这里使用的是 StringSerializer
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
         props.put(ProducerConfig.RETRIES_CONFIG, 3);//设置重试次数，避免因网络问题导致消息丢失。
-        props.put(ProducerConfig.RECONNECT_BACKOFF_MS_CONFIG,1000);//消息发送失败后，重试之间的等待时间
+        props.put(ProducerConfig.RECONNECT_BACKOFF_MS_CONFIG,1000);//消息发送失败后，重试之间的等待时间为1000ms。
 
-        props.put(ProducerConfig.ACKS_CONFIG, "all");//控制消息的持久化程度，等待所有副本确认。
+        props.put(ProducerConfig.ACKS_CONFIG, "all");//设置 acks=all 控制消息的持久化程度，等待所有副本确认。
+        props.put("min.insync.replicas","2");//确保消息至少被写入到 2 个副本中
+        props.put("replication.factor","3");//推荐设置成 replication.factor = min.insync.replicas + 1
+
+        //配置 unclean.leader.election.enable = false,当 leader
+        // 副本发生故障时就不会从 follower 副本中和 leader 同步程度达不到要求的副本中选择出 leader ，这样降低了消息丢失的可能性
+        props.put("unclean.leader.election.enable", "false"); // 禁止不完整的leader选举
         return props;
     }
 

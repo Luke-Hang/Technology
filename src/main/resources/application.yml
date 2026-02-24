@@ -12,7 +12,7 @@ spring:
     type-aliases-package: myspringboot.pojo
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9092,localhost:9093
     consumer:
       group-id: person-info-change-group
       auto-offset-reset: earliest
@@ -33,7 +33,7 @@ spring:
     cluster:
       nodes: 192.168.126.129:7000,192.168.126.129:7001,192.168.126.129:7002,192.168.126.129:7003,192.168.126.129:7004
     password: 123
-    expirationTime: 36000
+    expirationTime: 30000
     renewalTime: 5000
     pool:
       max-active: 200

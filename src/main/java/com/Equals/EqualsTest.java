@@ -27,9 +27,9 @@ public class EqualsTest {
 
     private static void equalSymbol() {
         //Person重写equals，比较两个对象中的属性是否相等；属性相等，返回 true
-        Person person1 = new Person(1, "zhangsan", 20);
-        Person person2 = new Person(1, "zhangsan", 20);
-        Person person3 = new Person(1, "zhangsan", 30);
+        Person person1 = new Person("1", "zhangsan", 20);
+        Person person2 = new Person("1", "zhangsan", 20);
+        Person person3 = new Person("1", "zhangsan", 30);
 
         //People没有重写equals，比较该类的两个对象时，等价于通过“==”比较这两个对象，使用的默认是 Object类equals()方法。
         //因为对象是引用数据类型，所以比较的是对象的地址值，永远为false

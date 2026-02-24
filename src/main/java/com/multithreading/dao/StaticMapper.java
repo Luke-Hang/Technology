@@ -2,8 +2,10 @@ package com.multithreading.dao;
 
 import java.util.List;
 
-import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.*;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Component;
 
 /**
  * 
@@ -14,6 +16,20 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface StaticMapper {
 
-	void saveDta(List<BaseSiteModel> listMap2);
+	void saveAntennaList(@Param("antennaList") List<Antenna> antennaList);
 
+	void saveAAUList(@Param("aauList") List<AAUModel> aauModelList);
+
+	void saveBBUList(@Param("bbuList") List<BBUModel> bbuModelList);
+
+	void saveOilList(@Param("oilList") List<OilModel> oilModelList);
+
+	void saveAirConditionList(@Param("airConditionList") List<AirCondition> airConditionList);
+
+
+	void saveHoldingPoleList(@Param("holdingPoleList") List<HoldingPole> holdingPoleList);
+
+	void saveRRUList(@Param("rruModelList") List<RRUModel> rruModelList);
+
+	void savePowerList(@Param("powerList") List<Power> powerList);
 }

@@ -1,7 +1,7 @@
 package com.myspringboot.controller;
 
 import com.myspringboot.model.UserModel;
-import com.myspringboot.redis.service.RedisService;
+import com.redis.service.RedisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
