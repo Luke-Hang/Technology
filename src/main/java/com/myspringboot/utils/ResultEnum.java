@@ -19,6 +19,9 @@ public enum ResultEnum implements IResult{
     FORBIDDEN(2004,"没有权限访问资源");
 
 
+
+
+
     private Integer code;
     private String message;
 
