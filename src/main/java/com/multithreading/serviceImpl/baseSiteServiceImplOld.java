@@ -104,11 +104,11 @@ public class baseSiteServiceImplOld implements baseSiteService {
          * @param baseSiteModel
          */
         private void saveSiteDatas(BaseSiteModel baseSiteModel) {
-            staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
+/*            staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
             staticMapper.saveAAUBatch(baseSiteModel.getAauModelList());
             staticMapper.saveBBUBatch(baseSiteModel.getBbuModelList());
             staticMapper.saveOilDateBatch(baseSiteModel.getOilModelList());
-            staticMapper.saveAirConditionDataBatch(baseSiteModel.getAirConditionList());
+            staticMapper.saveAirConditionDataBatch(baseSiteModel.getAirConditionList());*/
         }
     }
 }
