@@ -26,6 +26,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             return;
         }
 
+
+        ///  nihao
+
         //验证 token 有效性
         String token = header.split(" ")[1].trim();
         if (!jwtUtils.validateJwtToken(token)) {
