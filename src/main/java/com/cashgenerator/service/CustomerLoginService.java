@@ -8,5 +8,5 @@ import javax.validation.constraints.NotNull;
 
 public interface CustomerLoginService {
 
-    LoginBo validateCustomer(@NotNull @Valid LoginBo loginBo, AuthenticationType authenticationType);
+    LoginBo validateCustomerCredentials(@NotNull @Valid LoginBo loginBo, AuthenticationType authenticationType);
 }
