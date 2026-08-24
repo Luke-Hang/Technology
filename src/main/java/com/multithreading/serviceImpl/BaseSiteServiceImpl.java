@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -30,6 +31,9 @@ public class BaseSiteServiceImpl implements BaseSiteService {
 
     @Autowired
     private BaseSiteSaveService baseSiteSaveService;
+
+    @Resource(name = "msgThreadPool")
+    private ThreadPoolTaskExecutor msgThreadPool;
 
     /**
      *
@@ -64,9 +68,6 @@ public class BaseSiteServiceImpl implements BaseSiteService {
         // 因此，在 BaseSiteModel 及其内部设备 list 不被其他线程并发修改的前提下，这里没有 list 层面的线程安全问题。
         List<BaseSiteModel> baseSiteList = new ArrayList<>(baseSiteModelList);
 
-        // 获取线程池实例 MsgThreadPool。
-        ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstance();
-
         //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
         //计数器countDownLatch，数量设为数据集合的长度
         final CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
@@ -84,7 +85,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
                  * 即可以继续执行下一个循环,无需等待当前循环执行完毕。
                  *
                  */
-                threadPoolInstance.execute(() -> {
+                msgThreadPool.execute(() -> {
                     try {
                         baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {

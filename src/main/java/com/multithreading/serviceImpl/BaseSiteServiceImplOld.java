@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -34,6 +35,9 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
     @Autowired
     private BaseSiteSaveMapper baseSiteSaveMapper;
 
+    @Resource(name = "msgThreadPool")
+    private ThreadPoolTaskExecutor msgThreadPool;
+
     @Override
     public void baseSiteService(List<BaseSiteModel> list) {
         try {
@@ -51,8 +55,6 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
              * 	public void execute(Runnable task) execute需要传入一个Runnable类型的任务task
              * */
 
-            // 获取线程池实例
-            ThreadPoolTaskExecutor executor = MsgThreadPool.getPoolInstance();
 
             //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
             //计数器countDownLatch，数量设为数据集合的长度
@@ -67,7 +69,7 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
                 //计数器
                 taskData.setCountDownLatch(countDownLatch);
                 // executor 异步执行 提交的Runnable 任务 TranData
-                executor.execute(taskData);
+                msgThreadPool.execute(taskData);
             }
             //当计数器countDownLatch不为0时，调用await()使主线程处于阻塞状态，等待数据入库的所有参与者执行结束，再执行主线程
             countDownLatch.await();
