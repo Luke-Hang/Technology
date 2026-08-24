@@ -7,11 +7,11 @@ import java.util.List;
 @Data
 public class BaseSiteModel {
 
-    //天线
-    List<Antenna> antennaList;
+    //空调
+    List<AirCondition> airConditionList;
 
-    //抱杆
-    List<HoldingPole> holdingPoleList;
+    //油机
+    List<OilModel> oilModelList;
 
     //AAU
     List<AAUModel> aauModelList;
@@ -19,15 +19,15 @@ public class BaseSiteModel {
     //BBU
     List<BBUModel> bbuModelList;
 
-    //RRu
+    //RRU
     List<RRUModel> rruModelList;
 
     //电池
     List<Power> powerList;
 
-    //油机
-    List<OilModel> oilModelList;
+    //天线
+    List<Antenna> antennaList;
 
-    //空调
-    List<AirCondition> airConditionList;
+    //抱杆
+    List<HoldingPole> holdingPoleList;
 }

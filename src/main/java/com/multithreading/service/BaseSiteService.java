@@ -5,8 +5,8 @@ import java.util.List;
 import com.multithreading.model.BaseSiteModel;
 
 
-public interface baseSiteService {
+public interface BaseSiteService {
 
 
-	void baseSiteService(List<BaseSiteModel> list);
+	void baseSiteService(List<BaseSiteModel> baseSiteList);
 }

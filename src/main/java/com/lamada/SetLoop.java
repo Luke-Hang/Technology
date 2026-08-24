@@ -1,8 +1,5 @@
 package com.lamada;
 
-import com.sun.corba.se.spi.ior.IORTemplate;
-import org.hamcrest.Condition;
-
 import java.util.*;
 
 /**

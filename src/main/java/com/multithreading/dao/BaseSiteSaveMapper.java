@@ -5,7 +5,6 @@ import java.util.List;
 import com.multithreading.model.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.springframework.stereotype.Component;
 
 /**
  * 
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Component;
  *
  */
 @Mapper
-public interface StaticMapper {
+public interface BaseSiteSaveMapper {
 
 	void saveAntennaList(@Param("antennaList") List<Antenna> antennaList);
 
@@ -25,7 +24,6 @@ public interface StaticMapper {
 	void saveOilList(@Param("oilList") List<OilModel> oilModelList);
 
 	void saveAirConditionList(@Param("airConditionList") List<AirCondition> airConditionList);
-
 
 	void saveHoldingPoleList(@Param("holdingPoleList") List<HoldingPole> holdingPoleList);
 

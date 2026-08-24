@@ -1,8 +1,8 @@
 package com.multithreading.serviceImpl;
 
-import com.multithreading.dao.StaticMapper;
+import com.multithreading.dao.BaseSiteSaveMapper;
 import com.multithreading.model.BaseSiteModel;
-import com.multithreading.service.baseSiteService;
+import com.multithreading.service.BaseSiteService;
 import com.multithreading.utils.MsgThreadPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,10 +29,10 @@ import java.util.concurrent.CountDownLatch;
  * ✅ 总结：利用线程池并发处理数据入库，提高效率，并保证主线程等待所有入库完成。
  */
 @Service
-public class baseSiteServiceImplOld implements baseSiteService {
+public class BaseSiteServiceImplOld implements BaseSiteService {
 
     @Autowired
-    private StaticMapper staticMapper;
+    private BaseSiteSaveMapper baseSiteSaveMapper;
 
     @Override
     public void baseSiteService(List<BaseSiteModel> list) {

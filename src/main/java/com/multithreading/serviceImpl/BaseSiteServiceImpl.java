@@ -1,16 +1,17 @@
 package com.multithreading.serviceImpl;
 
-import com.multithreading.dao.StaticMapper;
 import com.multithreading.model.BaseSiteModel;
-import com.multithreading.service.baseSiteService;
+import com.multithreading.service.BaseSiteSaveService;
+import com.multithreading.service.BaseSiteService;
 import com.multithreading.utils.MsgThreadPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 利用多线程将数据插入库中
@@ -25,26 +26,34 @@ import java.util.concurrent.CountDownLatch;
  * ✅ 总结：利用线程池并发处理数据入库，提高效率，并保证主线程等待所有入库完成。
  */
 @Service
-public class baseSiteServiceImpl implements baseSiteService {
+public class BaseSiteServiceImpl implements BaseSiteService {
 
     @Autowired
-    private StaticMapper staticMapper;
+    private BaseSiteSaveService baseSiteSaveService;
 
+    /**
+     *
+     * @param baseSiteList 某个行政区域下的所有基站信息
+     */
     @Override
-    public void baseSiteService(List<BaseSiteModel> list) {
+    public void baseSiteService(List<BaseSiteModel> baseSiteModelList) {
+        if (baseSiteModelList == null || baseSiteModelList.isEmpty()) {
+            return;
+        }
+
+        List<BaseSiteModel> baseSiteList = new ArrayList<>(baseSiteModelList);
+
+        // 获取线程池实例 MsgThreadPool。
+        ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstance();
+
+        //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
+        //计数器countDownLatch，数量设为数据集合的长度
+        final CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
+
         try {
-            //使用Collections.synchronizedList，将其转为线程安全的synBaseSiteList
-            List<BaseSiteModel> synBaseSiteList = Collections.synchronizedList(list);
-
-            // 获取线程池实例 MsgThreadPool。
-            ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstance();
-
-            //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
-            //计数器countDownLatch，数量设为数据集合的长度
-            final CountDownLatch countDownLatch = new CountDownLatch(synBaseSiteList.size());
-
-            // 循环baseSiteList将数据插入库中,每个线程执行一个基站设备信息入库操作
-            for (BaseSiteModel synBaseSiteModel : synBaseSiteList) {
+            // 提交任务
+            // 循环 baseSiteList 将数据插入库中,每个线程执行一个基站设备信息入库操作
+            for (BaseSiteModel synBaseSiteModel : baseSiteList) {
                 // 每条基站数据封装成任务提交线程池，异步执行 saveSiteDatas() 入库
                 // executor 异步执行 提交的Runnable 任务 synBaseSiteModel
                 /**
@@ -56,7 +65,7 @@ public class baseSiteServiceImpl implements baseSiteService {
                  */
                 threadPoolInstance.execute(() -> {
                     try {
-                        saveBaseSiteData(synBaseSiteModel);
+                        baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -66,32 +75,16 @@ public class baseSiteServiceImpl implements baseSiteService {
                 });
             }
             //当计数器countDownLatch不为0时，调用await()使主线程处于阻塞状态，等待数据入库的所有参与者执行结束，再执行主线程
-            countDownLatch.await();
+            //如果某个任务卡死，比如数据库连接一直阻塞，主线程会一直等。生产里更稳的是加超时时间：
+            // 最多等待 40 分钟，等待所有基站入库任务执行完成。
+            // 任务全部完成会提前返回 true；超过 40 分钟仍未完成则返回 false。
+            boolean finished = countDownLatch.await(40, TimeUnit.MINUTES);
+            if (!finished) {
+                throw new RuntimeException("基站数据同步超时");
+            }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("基站数据同步被中断", e);
         }
-    }
-
-    /**
-     * 数据批量入库
-     * @param baseSiteModel
-     */
-    private void saveBaseSiteData(BaseSiteModel baseSiteModel) {
-        //天线
-        staticMapper.saveAntennaList(baseSiteModel.getAntennaList());
-        //抱杆
-        staticMapper.saveHoldingPoleList(baseSiteModel.getHoldingPoleList());
-        //5G AAU
-        staticMapper.saveAAUList(baseSiteModel.getAauModelList());
-        //5G BBU
-        staticMapper.saveBBUList(baseSiteModel.getBbuModelList());
-        //5G RRU
-        staticMapper.saveRRUList(baseSiteModel.getRruModelList());
-        //电源
-        staticMapper.savePowerList(baseSiteModel.getPowerList());
-        //空调
-        staticMapper.saveAirConditionList(baseSiteModel.getAirConditionList());
-        //油机
-        staticMapper.saveOilList(baseSiteModel.getOilModelList());
     }
 }
