@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.multithreading.dao.StaticMapper">
+<mapper namespace="com.multithreading.dao.BaseSiteSaveMapper">
 
     <insert id="saveAntennaList">
         into aau_table(aau_date,aau_city,aau_station,aau_pm25,aau_pm10,aau_so2,aau_no2,aau_co,aau_o3,aau_quality,aau_aqi,aau_source)
