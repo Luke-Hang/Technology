@@ -33,6 +33,8 @@ public class MsgThreadPool {
         // 500 可以覆盖正常峰值下的短时间任务堆积。
         //如果队列再大，虽然不容易触发拒绝策略，但会导致任务排队时间变长、内存占用增加。
         //同时我们使用 CallerRunsPolicy，当线程和队列都满了以后，由调用线程自己执行任务，降低提交速度，避免继续把压力打到数据库上。
+
+        // 500 是结合业务量和压测定的，不是随便写死的；队列有界是为了控制内存和延迟；CallerRunsPolicy 是为了反压保护数据库。
         executor.setQueueCapacity(500);
         /**
          * 线程池队列：https://blog.csdn.net/qq_39666711/article/details/140486386
