@@ -208,24 +208,28 @@ EXPLAIN SELECT * FROM orders WHERE total_amount > 4000;
 -- 说明：BETWEEN 是范围查询，B+Tree 索引可以用于范围定位；命中行数较少时，优化器更可能选择使用索引。
 EXPLAIN SELECT * FROM orders WHERE total_amount BETWEEN 4900 AND 4910;
 
--- 覆盖索引:查询只需要返回“索引里本来就有的字段”，MySQL 可能不用再回表查整行数据，直接从索引里就能把结果拿出来,这就叫覆盖索引
-回表:
-执行 SELECT * FROM orders WHERE customer_id = 100;
-普通二级索引里主要有:customer_id + 主键id
-MySQL 会先通过 customer_id 索引找到:customer_id = 100,id = 123 这两个字段的值。
-然后再拿 id = 123 去主键索引里查整行数据，得到 total_amount,status,created_at 等字段的值
-这个“再根据主键去查整行数据”的过程，就叫回表。
-回表 = 二级索引 → 找到主键 → 主键索引 → 获取其他字段。
+-- 覆盖索引:查询所需字段都在索引里，MySQL 可能不用再回表查整行数据，直接从索引里就能把结果拿出来,这就叫覆盖索引
 
-SELECT * FROM orders WHERE customer_id = 100
-        ↓
-查询 customer_id 二级索引
-        ↓
-找到 customer_id = 100,主键 id = 123
-        ↓
-拿 id = 123 查询主键（聚簇）索引
-        ↓
-得到 total_amount、status、created_at 等其他字段 这一步“根据主键再次查询完整数据”，就是回表。
+-- [速记]
+-- 覆盖索引 = 查询所需字段都在索引里 = 不需要回表查询。
+-- 回表 = 索引里的字段不够，先通过二级索引找到主键，再根据主键去查整行数据。
+
+-- 执行 SELECT * FROM orders WHERE customer_id = 100;
+-- 普通二级索引里主要有:customer_id + 主键id
+-- MySQL 会先通过 customer_id 索引找到:customer_id = 100,id = 123 这两个字段的值。
+-- 然后再拿 id = 123 去主键索引里查整行数据，得到 total_amount,status,created_at 等字段的值
+-- 这个“再根据主键去查整行数据”的过程，就叫回表。
+-- 回表 = 二级索引 → 找到主键 → 主键索引 → 获取其他字段。
+--
+-- SELECT * FROM orders WHERE customer_id = 100
+--         ↓
+-- 查询 customer_id 二级索引
+--         ↓
+-- 找到 customer_id = 100,主键 id = 123
+--         ↓
+-- 拿 id = 123 查询主键（聚簇）索引
+--         ↓
+-- 得到 total_amount、status、created_at 等其他字段 这一步“根据主键再次查询完整数据”，就是回表。
 
 -- 观察点：只查索引字段时更容易走覆盖索引，Extra 可能出现 Using index。
 EXPLAIN SELECT total_amount FROM orders WHERE total_amount > 4000;

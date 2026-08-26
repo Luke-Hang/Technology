@@ -262,9 +262,30 @@ ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
 
 -- INCLUDE 可以让索引覆盖更多返回列，减少 Key Lookup。
+-- 把一些“只需要返回、但不参与查找和排序”的字段，也存进非聚集索引里，从而减少 Key Lookup（回表）。
 EXEC sp_helpindex N'dbo.Orders';
-CREATE INDEX idx_orders_customer_created_include ON dbo.Orders(customer_id, created_at) INCLUDE (order_no, total_amount, status);
+CREATE INDEX idx_orders_customer_created_include ON dbo.Orders(customer_id, created_at) INCLUDE (order_no, total_amount, status)
+-- (customer_id, created_at) 索引键列，主要服务于 WHERE customer_id = 123 ORDER BY created_at DESC 负责查找和排序
+-- INCLUDE (order_no, total_amount, status) 把这些只需要返回的 order_no, total_amount, status INCLUDE 到 非聚集索引的叶子节点中
+-- 这些字段不参与索引查找顺序，查询的时候直接从非聚集索引里拿出来，减少甚至避免 Key Lookup（回表查询）。
 -- DROP INDEX idx_orders_customer_created_include ON dbo.Orders;
+
+-- [重点]
+-- MySQL 和 sql server 都有覆盖索引机制
+-- 覆盖索引：查询所需字段都在索引里，不需要再去主表/聚集索引里补数据。
+
+-- [速记]
+-- 覆盖索引 = 查询所需字段都在索引里 = 不需要回表查询。
+-- 回表 = 索引里的字段不够，先通过二级索引找到主键，再根据主键去查整行数据。
+--
+-- 但是
+-- SQL Server 有这种 INCLUDE 语法
+-- CREATE INDEX idx_orders_customer_created_include ON dbo.Orders(customer_id, created_at) INCLUDE (order_no, total_amount, status)
+-- SQL Server 的 INCLUDE 列只是放在非聚集索引叶子节点里，不参与索引键顺序。
+--
+-- MySQL 里如果你想让这些字段都在索引里，就只能把它们都放进联合索引：
+-- CREATE INDEX idx_orders_customer_created_cover ON orders(customer_id, created_at, order_no, total_amount, status);
+
 
 SELECT order_no, customer_id, created_at, total_amount, status FROM dbo.Orders
 WHERE customer_id = 123
