@@ -358,3 +358,59 @@ EXPLAIN SELECT * FROM payments
 WHERE pay_method = 'CARD'
 ORDER BY created_at DESC
 LIMIT 20;
+
+-- 常见索引失效或不走索引的情况（按常见程度和排查优先级排序）：
+-- 1. 联合索引没有遵守 最左前缀 原则。
+--    示例：索引是 (store_id, status, created_at)，却只写 WHERE status = 3
+--    改法：补上最左列条件，或按查询场景创建 (status, created_at) 索引。
+--    说明：如果查询场景是 store_id = ? AND status = ? AND created_at 范围查询，更适合创建 (store_id, status, created_at)；
+--
+--          WHERE 条件的书写顺序不影响索引使用，例如先写 created_at，再写 store_id、status，
+--          优化器仍然可以按 (store_id, status, created_at) 的索引顺序使用索引。
+--          真正要注意的是索引列顺序：如果索引建成 (created_at, store_id, status)，
+--          会先按 created_at 做范围扫描，后面的 store_id、status 利用效果可能受限。
+--
+
+-- 2. 索引列，使用函数或表达式。
+--    示例：WHERE DATE(created_at) = '2025-01-01'
+--    改法：WHERE created_at >= '2025-01-01' AND created_at < '2025-01-02'
+--
+
+-- 3. LIKE 使用前置通配符 %。
+--    示例：WHERE email LIKE '%demo.local'
+--    改法：尽量使用前缀匹配，例如 WHERE email LIKE 'customer\_%'
+--
+
+-- 4. 隐式类型转换导致索引难以利用。
+--    示例：phone 是 VARCHAR 类型，却写 WHERE phone = 13800138000
+--    改法：WHERE phone = '13800138000'
+--
+
+-- 5. 范围查询后面的联合索引列，难以继续用于精确过滤或排序。
+--    示例：索引是 (created_at, store_id, status)，WHERE created_at > '2025-01-01' AND store_id = 8
+--    说明：created_at 是范围条件，后面的 store_id、status 利用效果可能受限。
+--
+可以，回答到第 5 个基本够用了，尤其是普通面试。
+-- 6. SELECT * 导致大量回表，索引收益下降。
+--    示例：WHERE total_amount > 4000 命中很多行，并且查询所有列。
+--    改法：只查询必要字段，或设计覆盖索引。
+--
+
+-- 7. 查询命中行数太多，优化器认为全表扫描更便宜。
+--    示例：WHERE status = 3 命中大量订单。
+--    说明：低选择性字段即使建了索引，也不一定会被使用。
+--
+
+-- 8. ORDER BY / GROUP BY 字段顺序和索引顺序不匹配。
+--    示例：索引是 (store_id, status, created_at)，但按 total_amount 排序。
+--    说明：可能出现 Using filesort 或 Using temporary。
+--
+
+-- 9. OR 条件中有一侧没有合适索引。
+--    示例：WHERE customer_id = 100 OR total_amount > 4000
+--    说明：如果 OR 两边不能都高效走索引，优化器可能选择全表扫描。
+--
+
+-- 10. 使用不等于条件时，索引效果通常不稳定。
+--     示例：WHERE status <> 0 或 WHERE status != 0
+--     说明：如果返回数据比例很高，优化器可能选择全表扫描。
