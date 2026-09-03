@@ -1,66 +1,76 @@
 package com.multithreading.utils;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 //创建线程池
+@Configuration
 public class MsgThreadPool {
 
-	//使用Spring提供的线程池ThreadPoolTaskExecutor
-	private static ThreadPoolTaskExecutor executor=null;
-
-	public static ThreadPoolTaskExecutor getPoolInstance() {
+    @Bean("msgThreadPool")
+    public ThreadPoolTaskExecutor getPoolInstance() {
 /*		java线程池如何合理配置核心线程数
 			1.获取机器的CPU核数，：int n = Runtime.getRuntime().availableProcessors();
 			2.判断线程池处理的程序是CPU密集型，还是IO密集型
 				IO密集型(读写密集型):   核心线程数 = CPU核数 * 2=2n
 				CPU密集型(计算密集型):  核心线程数 = CPU核数 + 1=n+1
 			*/
-		//获取CPU核数
-		int cpuNum = Runtime.getRuntime().availableProcessors();
-		try {
-			executor = new ThreadPoolTaskExecutor();
-			//设置核心线程数
-			executor.setCorePoolSize(cpuNum);
-			//设置最大线程数
-			executor.setMaxPoolSize(2*cpuNum);
-			//设置阻塞队列大小为500，表示有界队列
-			executor.setQueueCapacity(500);
-			/**
-			 * 线程池队列：https://blog.csdn.net/qq_39666711/article/details/140486386
-			 * 	1.无界队列：
-			 * 		队列容量理论上是无限的，容量受限于JVM内存。当内存耗尽时，会抛出OutOfMemoryError
-			 * 		用于任务量非常大，且任务执行时间较长，LinkedBlockingQueue 不指定容量或指定容量为Integer.MAX_VALUE
-			 * 	2、有界队列：
-			 * 		队列有一个固定的容量限制，当队列满时，尝试添加新任务的操作会被阻塞，直到队列中有空间可用
-			 * 		ArrayBlockingQueue
-			 * 		适用于需要控制任务数量，防止资源耗尽的场景。通过调整队列大小和线程池大小，可以灵活控制任务的并发执行
-			 * 	3、直接提交队列（SynchronousQueue）：
-			 * 		这种队列实际上并不存储任何元素，要添加新任务必须得有空闲的线程才能添加
-			 * 		适用于任务处理时间较短，且生产者和消费者速度大致匹配的场景。它可以有效减少任务在队列中的等待时间，提高系统的响应速度。
-			 * 	4、优先级队列：
-			 * 		队列中的元素会根据其优先级进行排序，优先级高的元素会先被取出执行
-			 * 		PriorityBlockingQueue，适用于需要按照任务优先级顺序执行的场景。通过调整任务的优先级，可以确保重要任务得到优先处理。
-			 *
-			 *
-			 * 在选择线程池中的队列时，需要根据具体的应用场景和需求来决定：
-			 *
-			 * 	1.任务类型和特点：如果任务处理时间较长，且任务量不确定，可以选择无界队列；如果任务量较大且需要控制并发数，可以选择有界队列。
-			 * 	2.系统资源：考虑系统的内存和CPU资源。无界队列虽然可以处理大量任务，但存在内存溢出的风险；
-			 * 	  有界队列可以避免内存溢出，但需要合理设置队列大小和线程池大小。
-			 * 	3.性能要求：如果要求系统响应速度快，且任务处理时间较短，可以选择直接提交队列或优先级队列。
-			 * 	4.任务优先级：如果任务有明确的优先级要求，可以选择优先级队列。
-			 */
+        //获取CPU核数
+        int cpuNum = Runtime.getRuntime().availableProcessors();
+        //使用Spring提供的线程池ThreadPoolTaskExecutor
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        //设置核心线程数
+        executor.setCorePoolSize(cpuNum);
+        //设置最大线程数
+        executor.setMaxPoolSize(2 * cpuNum);
+
+        //我们生产最终是 queueCapacity = 500，原因是这个线程池用于基站数据批量入库，
+        //这个线程池用于基站数据批量入库，属于 IO 密集型任务，瓶颈不在 CPU，而在数据库连接池和写库吞吐。
+        //阻塞队列大小我们生产最终定的是 500，这是根据日常单批数据量、峰值提交速度和压测结果调整出来的。
+        // 500 可以覆盖正常峰值下的短时间任务堆积。
+        //如果队列再大，虽然不容易触发拒绝策略，但会导致任务排队时间变长、内存占用增加。
+        //同时我们使用 CallerRunsPolicy，当线程和队列都满了以后，由调用线程自己执行任务，降低提交速度，避免继续把压力打到数据库上。
+
+        // 500 是结合业务量和压测定的，不是随便写死的；队列有界是为了控制内存和延迟；CallerRunsPolicy 是为了反压保护数据库。
+        executor.setQueueCapacity(500);
+        /**
+         * 线程池队列：https://blog.csdn.net/qq_39666711/article/details/140486386
+         * 	1.无界队列：
+         * 		队列容量理论上是无限的，容量受限于JVM内存。当内存耗尽时，会抛出OutOfMemoryError
+         * 		用于任务量非常大，且任务执行时间较长，LinkedBlockingQueue 不指定容量或指定容量为Integer.MAX_VALUE
+         * 	2、有界队列：
+         * 		队列有一个固定的容量限制，当队列满时，尝试添加新任务的操作会被阻塞，直到队列中有空间可用
+         * 		ArrayBlockingQueue
+         * 		适用于需要控制任务数量，防止资源耗尽的场景。通过调整队列大小和线程池大小，可以灵活控制任务的并发执行
+         * 	3、直接提交队列（SynchronousQueue）：
+         * 		这种队列实际上并不存储任何元素，要添加新任务必须得有空闲的线程才能添加
+         * 		适用于任务处理时间较短，且生产者和消费者速度大致匹配的场景。它可以有效减少任务在队列中的等待时间，提高系统的响应速度。
+         * 	4、优先级队列：
+         * 		队列中的元素会根据其优先级进行排序，优先级高的元素会先被取出执行
+         * 		PriorityBlockingQueue，适用于需要按照任务优先级顺序执行的场景。通过调整任务的优先级，可以确保重要任务得到优先处理。
+         *
+         *
+         * 在选择线程池中的队列时，需要根据具体的应用场景和需求来决定：
+         *
+         * 	1.任务类型和特点：如果任务处理时间较长，且任务量不确定，可以选择无界队列；如果任务量较大且需要控制并发数，可以选择有界队列。
+         * 	2.系统资源：考虑系统的内存和CPU资源。无界队列虽然可以处理大量任务，但存在内存溢出的风险；
+         * 	  有界队列可以避免内存溢出，但需要合理设置队列大小和线程池大小。
+         * 	3.性能要求：如果要求系统响应速度快，且任务处理时间较短，可以选择直接提交队列或优先级队列。
+         * 	4.任务优先级：如果任务有明确的优先级要求，可以选择优先级队列。
+         */
 
 
-			/*
-			 * 设置除核心线程外的线程存活时间(最大线程数-核心线程数就是非核心线程数，
-			 *  也就是救急线程数，这里的时间就是救急线程存活的时间)
-			 */
-			//非核心线程存活时间,默认60s
-			executor.setKeepAliveSeconds(60);
-			//设置线程池拒绝策略
+        /*
+         * 设置除核心线程外的线程存活时间(最大线程数-核心线程数就是非核心线程数，
+         *  也就是救急线程数，这里的时间就是救急线程存活的时间)
+         */
+        //非核心线程存活时间,默认60s
+        executor.setKeepAliveSeconds(60);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		//设置线程池拒绝策略
 			/*https://blog.csdn.net/suifeng629/article/details/98884972
 			 * 如果线程到达 maximumPoolSize 仍然有新任务这时会执行拒绝策略。拒绝策略 jdk 提供了 4 种实现
 				1.AbortPolicy（中止策略，线程池默认拒绝策略--中止任务，抛出异常）：当任务不能再提交时，抛出异常，及时反馈程序运行状态。
@@ -72,16 +82,7 @@ public class MsgThreadPool {
 				4.DiscardOldestPolicy(丢弃旧任务策略--丢旧执新)：丢弃队列最前面的任务，重新提交被拒绝的任务
 					* 一种喜新厌旧的拒绝策略，根据实际业务是否允许丢弃老任务来认真衡量是否采用此策略
 			*/
-			executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-			executor.initialize();
-			return executor;
-		} catch (Exception e) {
-			executor.setCorePoolSize(3);
-			executor.setMaxPoolSize(5);
-			executor.setKeepAliveSeconds(60);
-			executor.setQueueCapacity(20);
-			executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-		}
-		return executor;
-	}
+        executor.initialize();
+        return executor;
+    }
 }

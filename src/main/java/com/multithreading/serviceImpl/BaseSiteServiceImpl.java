@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -31,9 +32,12 @@ public class BaseSiteServiceImpl implements BaseSiteService {
     @Autowired
     private BaseSiteSaveService baseSiteSaveService;
 
+    @Resource(name = "msgThreadPool")
+    private ThreadPoolTaskExecutor msgThreadPool;
+
     /**
      *
-     * @param baseSiteList 某个行政区域下的所有基站信息
+     * @param baseSiteModelList 某个行政区域下的所有基站信息
      */
     @Override
     public void baseSiteService(List<BaseSiteModel> baseSiteModelList) {
@@ -41,10 +45,28 @@ public class BaseSiteServiceImpl implements BaseSiteService {
             return;
         }
 
+        //把传进来的 baseSiteModelList 拷贝成了一份新的 ArrayList 快照。
+        // 主线程：遍历 baseSiteList，提交任务
+        // 子线程：处理单个 BaseSiteModel
+        // 子线程并没有去修改或遍历 baseSiteList，所以 baseSiteList 这个容器本身没有多线程读写冲突
+        // new ArrayList<>(baseSiteModelList) 保证的是：
+        //      当前这次同步要处理多少个基站是固定的
+        //      不会因为外部修改原始 baseSiteModelList，影响本次 for 循环和 CountDownLatch 数量
+        // 所以当前线程安全依赖的是：
+        //      1. baseSiteList 用 new ArrayList 做快照，避免原 list 数量变化
+        //      2. 子线程只处理各自拿到的 BaseSiteModel，不共享修改 baseSiteList
+        //      3. CountDownLatch 是 JDK 并发工具，本身线程安全
+        //      4. baseSiteSaveService 是 Spring Bean，通常无状态，只调用 Mapper，不保存共享可变成员变量
+        // 线程安全说明：
+            // 1. 主线程：遍历 baseSiteList 并提交任务，子线程不会修改 baseSiteList。
+            // 2. baseSiteList 是由入参拷贝出来的快照，可以避免外部修改原始 List 影响本次同步。
+                    //baseSiteModelList：外部传进来的原始 List
+                    //baseSiteList：当前方法内部新建的 List
+                    //它们是两个不同的 List 对象，即使外部后面修改原始 List，当前方法内部的 baseSiteList 还是不变的
+            // 3. 子线程只处理自己拿到的 BaseSiteModel，并通过 CountDownLatch 通知主线程任务完成。
+            // 4. CountDownLatch 可以被多个子线程安全调用 countDown()。
+        // 因此，在 BaseSiteModel 及其内部设备 list 不被其他线程并发修改的前提下，这里没有 list 层面的线程安全问题。
         List<BaseSiteModel> baseSiteList = new ArrayList<>(baseSiteModelList);
-
-        // 获取线程池实例 MsgThreadPool。
-        ThreadPoolTaskExecutor threadPoolInstance = MsgThreadPool.getPoolInstance();
 
         //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
         //计数器countDownLatch，数量设为数据集合的长度
@@ -63,7 +85,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
                  * 即可以继续执行下一个循环,无需等待当前循环执行完毕。
                  *
                  */
-                threadPoolInstance.execute(() -> {
+                msgThreadPool.execute(() -> {
                     try {
                         baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
