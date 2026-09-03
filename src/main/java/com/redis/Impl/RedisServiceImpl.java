@@ -8,7 +8,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,9 +28,6 @@ public class RedisServiceImpl implements RedisService {
 
     @Autowired
     private ProductDao productDao;
-
-
-
 
     @Override
     public void addString() {
@@ -99,5 +98,25 @@ public class RedisServiceImpl implements RedisService {
 
     private List<UserModel> getPersonList() {
         return null;
+    }
+
+    /**
+     * Java 里一次写 10 个 Redis key-value，Spring Data Redis 里最直接的是 multiSet
+     */
+    private void multiSet() {
+        Map<String, String> data = new HashMap<>();
+
+        data.put("key1", "value1");
+        data.put("key2", "value2");
+        data.put("key3", "value3");
+        data.put("key4", "value4");
+        data.put("key5", "value5");
+        data.put("key6", "value6");
+        data.put("key7", "value7");
+        data.put("key8", "value8");
+        data.put("key9", "value9");
+        data.put("key10", "value10");
+
+        stringRedisTemplate.opsForValue().multiSet(data);
     }
 }

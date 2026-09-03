@@ -32,9 +32,8 @@ public class DataSynchronizationController {
 
     @Autowired
     //@Qualifier 存在多个相同类型的bean时，明确指定应该注入哪个具体的bean
-    @Qualifier(value = "smsServiceImpl1")
+    @Qualifier(value = "smsServiceImpl")
     private SmsService smsService;
-
 
     /**
      * 远程调用外部站点信息库接口，

@@ -168,14 +168,14 @@ SELECT COUNT(*) AS payments_count FROM payments;
 SELECT * FROM orders WHERE customer_id = 100; 从 orders 表找出 customer_id = 100 的记录
 没有索引时,MySQL 可能需要扫描整张表，逐行判断 customer_id 是否等于 100,最终找出 customer_id = 100 的记录。
 
-给 customer_id 创建索引后,InnoDB 会创建并维护一棵以 customer_id 为索引键的 B+Tree。
+给 customer_id 创建索引后,InnoDB 会创建并维护一棵以 customer_id 为索引键的 B+Tree,这个B+Tree 按照 customer_id 的值，组织和排序索引记录。
 再次查询时,MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。
 例如：
 CREATE INDEX idx_orders_customer_id ON orders(customer_id); 给 customer_id 创建索引后
 再次执行 SELECT * FROM orders WHERE customer_id = 100; 再次从 orders 表找出 customer_id = 100 的记录
-MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。
+MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。这样可以减少扫描范围，提高查询效率。
 
-最常见的是优化 WHERE 条件查询，同时也可以优化 JOIN、ORDER BY、GROUP BY 等操作。
+最常见的是优化 WHERE 条件查询，同时也可以优化 JOIN、ORDER BY、GROUP BY 等操作。 
 
 
 缺点：代价是会占用额外存储空间，并增加 INSERT / UPDATE / DELETE 时维护索引的成本。
