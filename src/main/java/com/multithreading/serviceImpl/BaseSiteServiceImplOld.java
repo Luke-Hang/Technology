@@ -2,6 +2,7 @@ package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.BaseSiteSaveMapper;
 import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.District;
 import com.multithreading.service.BaseSiteService;
 import com.multithreading.utils.MsgThreadPool;
 import lombok.AllArgsConstructor;
@@ -39,7 +40,7 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
     private ThreadPoolTaskExecutor msgThreadPool;
 
     @Override
-    public void baseSiteService(List<BaseSiteModel> list) {
+    public void baseSiteService(District district, List<BaseSiteModel> list) {
         try {
             //将list放入线程安全容器 Collections中，保证线程安全
             // 将集合设置为线程安全的

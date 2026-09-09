@@ -59,7 +59,7 @@ public class DataSynchronizationController {
         // 讲个基站信息数据封装成一个大 BaseSiteModel List
         List<BaseSiteModel> baseSiteList = getBaseSiteList(district);
         //将数据插入库中
-        baseSiteService.baseSiteService(baseSiteList);
+        baseSiteService.baseSiteService(district, baseSiteList);
     }
 
     
