@@ -62,23 +62,12 @@ public class DataSynchronizationController {
         baseSiteService.baseSiteService(baseSiteList);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
+    /**
+     * 调用站点信息库接口获取某个区域下面的所有基站信息
+     * @param district
+     * @return
+     */
     private List<BaseSiteModel> getBaseSiteList(District district) {
 //        District district = new District("01", "雁塔区");
         logger.info("获取" + district.getDistrictName() + "所有基站信息，开始！");

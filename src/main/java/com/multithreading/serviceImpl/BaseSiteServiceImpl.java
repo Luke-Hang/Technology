@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,8 +34,8 @@ public class BaseSiteServiceImpl implements BaseSiteService {
     @Autowired
     private BaseSiteSaveService baseSiteSaveService;
 
-    @Resource(name = "msgThreadPool")
-    private ThreadPoolTaskExecutor msgThreadPool;
+    @Resource(name = "dataSyncThreadPool")
+    private ThreadPoolTaskExecutor dataSyncThreadPool;
 
     /**
      *
@@ -71,6 +73,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
         //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
         //计数器countDownLatch，数量设为数据集合的长度
         final CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
+        final Queue<Exception> failures = new ConcurrentLinkedQueue<>();
 
         try {
             // 提交任务
@@ -85,11 +88,13 @@ public class BaseSiteServiceImpl implements BaseSiteService {
                  * 即可以继续执行下一个循环,无需等待当前循环执行完毕。
                  *
                  */
-                msgThreadPool.execute(() -> {
+                dataSyncThreadPool.execute(() -> {
                     try {
                         baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        //某个基站入库失败：它自己的事务会回滚
+                        //countDownLatch.countDown() 仍然会执行，不会导致主线程一直等；
+                        failures.add(e);
                     } finally {
                         //调用countDownLatch countDown()方法将计数器countDownLatch-1，标记已经完成一个任务
                         countDownLatch.countDown();
@@ -103,6 +108,11 @@ public class BaseSiteServiceImpl implements BaseSiteService {
             boolean finished = countDownLatch.await(40, TimeUnit.MINUTES);
             if (!finished) {
                 throw new RuntimeException("基站数据同步超时");
+            }
+            //调用方可以感知“这批基站同步不是完全成功”。
+            //所有任务结束后，主线程能知道有失败，并向上抛异常
+            if (!failures.isEmpty()) {
+                throw new RuntimeException("部分基站数据同步失败，失败数量：" + failures.size(), failures.peek());
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

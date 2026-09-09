@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class MsgThreadPool {
 
-    @Bean("msgThreadPool")
+    @Bean("dataSyncThreadPool")
     public ThreadPoolTaskExecutor getPoolInstance() {
 /*		java线程池如何合理配置核心线程数
 			1.获取机器的CPU核数，：int n = Runtime.getRuntime().availableProcessors();

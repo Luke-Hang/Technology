@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(rollbackFor = Exception.class)
 public class BaseSiteSaveServiceImpl implements BaseSiteSaveService {
 
-
     @Autowired
     private BaseSiteSaveMapper baseSiteSaveMapper;
 
