@@ -2,13 +2,18 @@ package com.multithreading.controller;
 
 import com.multithreading.bo.BaseSiteSyncBO;
 import com.multithreading.bo.District;
+import com.multithreading.entity.BaseSiteSyncFailEntity;
 import com.multithreading.service.SmsService;
 import com.multithreading.service.BaseSiteService;
+import com.multithreading.service.BaseSiteSyncFailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -29,6 +34,9 @@ public class DataSynchronizationController {
 
     @Autowired
     private BaseSiteService baseSiteService;
+
+    @Autowired
+    private BaseSiteSyncFailService baseSiteSyncFailService;
 
     @Autowired
     //@Qualifier 存在多个相同类型的bean时，明确指定应该注入哪个具体的bean
@@ -60,6 +68,17 @@ public class DataSynchronizationController {
         List<BaseSiteSyncBO> baseSiteList = getBaseSiteList(district);
         //将数据插入库中
         baseSiteService.baseSiteService(district, baseSiteList);
+    }
+
+    @GetMapping("/failRecords")
+    public List<BaseSiteSyncFailEntity> failRecords(@RequestParam String batchNo) {
+        return baseSiteSyncFailService.findFailRecords(batchNo);
+    }
+
+    @PostMapping("/retryFailRecords")
+    public String retryFailRecords(@RequestParam String batchNo) {
+        int successCount = baseSiteSyncFailService.retryFailRecords(batchNo);
+        return "retry success count: " + successCount;
     }
 
     

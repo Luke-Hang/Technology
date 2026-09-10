@@ -6,12 +6,15 @@ import com.multithreading.dao.BaseSiteSyncFailMapper;
 import com.multithreading.entity.BaseSiteSyncFailEntity;
 import com.multithreading.bo.BaseSiteSyncBO;
 import com.multithreading.bo.District;
+import com.multithreading.service.BaseSiteSaveService;
 import com.multithreading.service.BaseSiteSyncFailService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
@@ -21,6 +24,9 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
 
     @Autowired
     private BaseSiteSyncFailMapper baseSiteSyncFailMapper;
+
+    @Autowired
+    private BaseSiteSaveService baseSiteSaveService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -48,6 +54,31 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
         failRecord.setStatus(FAILED_STATUS);
 
         baseSiteSyncFailMapper.save(failRecord);
+    }
+
+    @Override
+    public List<BaseSiteSyncFailEntity> findFailRecords(String batchNo) {
+        return baseSiteSyncFailMapper.findByBatchNo(batchNo);
+    }
+
+    @Override
+    public int retryFailRecords(String batchNo) {
+        List<BaseSiteSyncFailEntity> failRecords = baseSiteSyncFailMapper.findByBatchNo(batchNo);
+        int successCount = 0;
+
+        for (BaseSiteSyncFailEntity failRecord : failRecords) {
+            try {
+                BaseSiteSyncBO baseSiteSyncBO = objectMapper.readValue(failRecord.getRawDataJson(), BaseSiteSyncBO.class);
+                //重试机制，重新入库失败的基站信息，因为 baseSiteSaveService 有 @Transactional 事务注解，所以重试机制也是有事物的
+                baseSiteSaveService.saveBaseSiteData(baseSiteSyncBO);
+                baseSiteSyncFailMapper.updateRetrySuccess(failRecord.getId());
+                successCount++;
+            } catch (Exception e) {
+                baseSiteSyncFailMapper.updateRetryFailed(failRecord.getId(), buildErrorMessage(e));
+            }
+        }
+
+        return successCount;
     }
 
     private String toJson(BaseSiteSyncBO baseSiteModel) {

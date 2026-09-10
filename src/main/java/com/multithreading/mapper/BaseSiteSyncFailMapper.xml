@@ -4,6 +4,23 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.multithreading.dao.BaseSiteSyncFailMapper">
 
+    <resultMap id="BaseSiteSyncFailResultMap" type="com.multithreading.entity.BaseSiteSyncFailEntity">
+        <id column="id" property="id"/>
+        <result column="batch_no" property="batchNo"/>
+        <result column="district_code" property="districtCode"/>
+        <result column="district_name" property="districtName"/>
+        <result column="base_site_code" property="baseSiteCode"/>
+        <result column="base_site_name" property="baseSiteName"/>
+        <result column="raw_data_json" property="rawDataJson"/>
+        <result column="error_message" property="errorMessage"/>
+        <result column="retry_count" property="retryCount"/>
+        <result column="status" property="status"/>
+        <result column="first_fail_time" property="firstFailTime"/>
+        <result column="last_retry_time" property="lastRetryTime"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_time" property="updatedTime"/>
+    </resultMap>
+
     <insert id="save">
         insert into site5g.base_site_sync_fail(
             batch_no,
@@ -26,4 +43,45 @@
             #{status}
         )
     </insert>
+
+    <select id="findByBatchNo" resultMap="BaseSiteSyncFailResultMap">
+        select
+            id,
+            batch_no,
+            district_code,
+            district_name,
+            base_site_code,
+            base_site_name,
+            raw_data_json,
+            error_message,
+            retry_count,
+            status,
+            first_fail_time,
+            last_retry_time,
+            created_time,
+            updated_time
+        from site5g.base_site_sync_fail
+        where batch_no = #{batchNo}
+          and status in ('FAILED', 'RETRY_FAILED')
+        order by id asc
+    </select>
+
+    <update id="updateRetrySuccess">
+        update site5g.base_site_sync_fail
+        set status = 'RETRY_SUCCESS',
+            retry_count = ifnull(retry_count, 0) + 1,
+            last_retry_time = now(),
+            updated_time = now()
+        where id = #{id}
+    </update>
+
+    <update id="updateRetryFailed">
+        update site5g.base_site_sync_fail
+        set status = 'RETRY_FAILED',
+            retry_count = ifnull(retry_count, 0) + 1,
+            error_message = #{errorMessage},
+            last_retry_time = now(),
+            updated_time = now()
+        where id = #{id}
+    </update>
 </mapper>
