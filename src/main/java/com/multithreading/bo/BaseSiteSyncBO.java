@@ -2,6 +2,7 @@ package com.multithreading.bo;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 /**
  * Entity  -> 数据库表映射
@@ -19,6 +20,22 @@ public class BaseSiteSyncBO {
     private String baseSiteName;
 
     private String districtCode;
+
+    private String districtName;
+
+    private String address;
+
+    private BigDecimal longitude;
+
+    private BigDecimal latitude;
+
+    private String siteType;
+
+    private String networkType;
+
+    private String vendor;
+
+    private String status;
 
     //空调
     List<AirCondition> airConditionList;

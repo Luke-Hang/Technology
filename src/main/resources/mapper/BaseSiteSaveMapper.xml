@@ -76,7 +76,6 @@
         </foreach>
     </insert>
 
-
     <insert id="saveAAUList">
         insert into aau(
             base_site_code,
@@ -158,6 +157,7 @@
             )
         </foreach>
     </insert>
+
     <insert id="saveAirConditionList">
         insert into air_condition(
             base_site_code,

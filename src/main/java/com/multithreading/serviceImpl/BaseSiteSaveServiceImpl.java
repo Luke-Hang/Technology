@@ -2,6 +2,7 @@ package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.BaseSiteSaveMapper;
 import com.multithreading.bo.BaseSiteSyncBO;
+import com.multithreading.converter.BaseSiteSyncConverter;
 import com.multithreading.service.BaseSiteSaveService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,9 @@ public class BaseSiteSaveServiceImpl implements BaseSiteSaveService {
 
     @Autowired
     private BaseSiteSaveMapper baseSiteSaveMapper;
+
+    @Autowired
+    private BaseSiteSyncConverter baseSiteSyncConverter;
 
     /**
      * 数据批量入库
@@ -34,38 +38,39 @@ public class BaseSiteSaveServiceImpl implements BaseSiteSaveService {
      */
     @Override
     public void saveBaseSiteData(BaseSiteSyncBO synBaseSiteModel) {
+        baseSiteSaveMapper.saveBaseSite(baseSiteSyncConverter.toBaseSiteEntity(synBaseSiteModel));
 
         //空调
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAirConditionList())) {
-            baseSiteSaveMapper.saveAirConditionList(synBaseSiteModel.getAirConditionList());
+            baseSiteSaveMapper.saveAirConditionList(baseSiteSyncConverter.toAirConditionEntityList(synBaseSiteModel.getAirConditionList()));
         }
         //油机
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getOilModelList())) {
-            baseSiteSaveMapper.saveOilList(synBaseSiteModel.getOilModelList());
+            baseSiteSaveMapper.saveOilList(baseSiteSyncConverter.toOilEntityList(synBaseSiteModel.getOilModelList()));
         }
         //5G AAU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAauModelList())) {
-            baseSiteSaveMapper.saveAAUList(synBaseSiteModel.getAauModelList());
+            baseSiteSaveMapper.saveAAUList(baseSiteSyncConverter.toAAUEntityList(synBaseSiteModel.getAauModelList()));
         }
         //5G BBU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getBbuModelList())) {
-            baseSiteSaveMapper.saveBBUList(synBaseSiteModel.getBbuModelList());
+            baseSiteSaveMapper.saveBBUList(baseSiteSyncConverter.toBBUEntityList(synBaseSiteModel.getBbuModelList()));
         }
         //5G RRU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getRruModelList())) {
-            baseSiteSaveMapper.saveRRUList(synBaseSiteModel.getRruModelList());
+            baseSiteSaveMapper.saveRRUList(baseSiteSyncConverter.toRRUEntityList(synBaseSiteModel.getRruModelList()));
         }
         //天线
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAntennaList())) {
-            baseSiteSaveMapper.saveAntennaList(synBaseSiteModel.getAntennaList());
+            baseSiteSaveMapper.saveAntennaList(baseSiteSyncConverter.toAntennaEntityList(synBaseSiteModel.getAntennaList()));
         }
         //抱杆
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getHoldingPoleList())) {
-            baseSiteSaveMapper.saveHoldingPoleList(synBaseSiteModel.getHoldingPoleList());
+            baseSiteSaveMapper.saveHoldingPoleList(baseSiteSyncConverter.toHoldingPoleEntityList(synBaseSiteModel.getHoldingPoleList()));
         }
         //电源
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getPowerList())) {
-            baseSiteSaveMapper.savePowerList(synBaseSiteModel.getPowerList());
+            baseSiteSaveMapper.savePowerList(baseSiteSyncConverter.toPowerEntityList(synBaseSiteModel.getPowerList()));
         }
     }
 }

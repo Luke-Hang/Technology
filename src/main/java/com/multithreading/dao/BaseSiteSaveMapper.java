@@ -2,7 +2,15 @@ package com.multithreading.dao;
 
 import java.util.List;
 
-import com.multithreading.bo.*;
+import com.multithreading.entity.AAUEntity;
+import com.multithreading.entity.AirConditionEntity;
+import com.multithreading.entity.AntennaEntity;
+import com.multithreading.entity.BBUEntity;
+import com.multithreading.entity.BaseSiteEntity;
+import com.multithreading.entity.HoldingPoleEntity;
+import com.multithreading.entity.OilEntity;
+import com.multithreading.entity.PowerEntity;
+import com.multithreading.entity.RRUEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,19 +23,21 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface BaseSiteSaveMapper {
 
-	void saveAntennaList(@Param("antennaList") List<Antenna> antennaList);
+	void saveBaseSite(BaseSiteEntity baseSiteEntity);
 
-	void saveAAUList(@Param("aauList") List<AAUModel> aauModelList);
+	void saveAntennaList(@Param("antennaList") List<AntennaEntity> antennaList);
 
-	void saveBBUList(@Param("bbuList") List<BBUModel> bbuModelList);
+	void saveAAUList(@Param("aauList") List<AAUEntity> aauModelList);
 
-	void saveOilList(@Param("oilList") List<OilModel> oilModelList);
+	void saveBBUList(@Param("bbuList") List<BBUEntity> bbuModelList);
 
-	void saveAirConditionList(@Param("airConditionList") List<AirCondition> airConditionList);
+	void saveOilList(@Param("oilList") List<OilEntity> oilModelList);
 
-	void saveHoldingPoleList(@Param("holdingPoleList") List<HoldingPole> holdingPoleList);
+	void saveAirConditionList(@Param("airConditionList") List<AirConditionEntity> airConditionList);
 
-	void saveRRUList(@Param("rruModelList") List<RRUModel> rruModelList);
+	void saveHoldingPoleList(@Param("holdingPoleList") List<HoldingPoleEntity> holdingPoleList);
 
-	void savePowerList(@Param("powerList") List<Power> powerList);
+	void saveRRUList(@Param("rruModelList") List<RRUEntity> rruModelList);
+
+	void savePowerList(@Param("powerList") List<PowerEntity> powerList);
 }
