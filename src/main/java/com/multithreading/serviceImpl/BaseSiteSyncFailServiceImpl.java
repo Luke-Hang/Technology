@@ -25,6 +25,13 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    /**
+     * saveFailRecord 因为 REQUIRES_NEW 开启一个新事务，把失败基站的数据、批次号、错误信息保存到失败表
+     * @param batchNo
+     * @param district
+     * @param baseSiteModel
+     * @param exception
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void saveFailRecord(String batchNo, District district, BaseSiteSyncBO baseSiteModel, Exception exception) {

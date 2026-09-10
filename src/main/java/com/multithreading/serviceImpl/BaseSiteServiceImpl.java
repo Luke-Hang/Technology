@@ -96,10 +96,40 @@ public class BaseSiteServiceImpl implements BaseSiteService {
                  * 即可以继续执行下一个循环,无需等待当前循环执行完毕。
                  *
                  */
+
+
+                /**
+                 * 某个基站入库
+                 *   -> 调用 baseSiteSaveService.saveBaseSiteData(...)
+                 *   -> 这个方法在 BaseSiteSaveServiceImpl 的事务里执行
+                 *   -> 中途异常
+                 *   -> 当前这个基站的入库事务回滚
+                 *   -> 异常被子线程里的 catch 捕获
+                 *   -> 调用 handleSaveFailure(...)
+                 *   -> handleSaveFailure 再调用 baseSiteSyncFailService.saveFailRecord(...)
+                 *   -> saveFailRecord 因为 REQUIRES_NEW 开启一个新事务
+                 *   -> 把失败基站的数据、批次号、错误信息保存到失败表
+                 *   -> 最后 failures.add(exception)
+                 *
+                 *
+                 *
+                 基站 1：成功 -> 正常提交
+                 基站 2：失败 -> 业务数据回滚 -> 失败表保存
+                 基站 3：成功 -> 正常提交
+                 基站 4：失败 -> 业务数据回滚 -> 失败表保存
+
+                 一个基站成功，只提交这个基站的数据；
+                 一个基站失败，只回滚这个基站的数据；
+                 失败记录单独用 REQUIRES_NEW 保存，不跟业务入库事务一起回滚；
+                 其他基站不受它影响，继续正常执行。
+                 *
+                 */
                 dataSyncThreadPool.execute(() -> {
                     try {
+                        //成功的基站：正常提交，失败基站：本次入库全部回滚
                         baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
+                        //处理失败基站、异常被子线程里的 catch 捕获
                         handleSaveFailure(batchNo, district, synBaseSiteModel, e, failures);
                     } finally {
                         //调用countDownLatch countDown()方法将计数器countDownLatch-1，标记已经完成一个任务
