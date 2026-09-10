@@ -7,10 +7,8 @@ import lombok.Data;
  * @date 2025/5/2 9:27
  */
 @Data
-public class BBUModel {
+public class BBUModel extends BaseSiteDeviceBO {
 
-    private String baseSiteCode;
-    private String baseSiteName;
     private String deviceCode;
     private String deviceName;
     private String brand;

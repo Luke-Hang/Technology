@@ -3,11 +3,14 @@ package com.multithreading.serviceImpl;
 import com.multithreading.dao.BaseSiteSaveMapper;
 import com.multithreading.bo.BaseSiteSyncBO;
 import com.multithreading.converter.BaseSiteSyncConverter;
+import com.multithreading.entity.*;
 import com.multithreading.service.BaseSiteSaveService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -38,39 +41,48 @@ public class BaseSiteSaveServiceImpl implements BaseSiteSaveService {
      */
     @Override
     public void saveBaseSiteData(BaseSiteSyncBO synBaseSiteModel) {
-        baseSiteSaveMapper.saveBaseSite(baseSiteSyncConverter.toBaseSiteEntity(synBaseSiteModel));
+        BaseSiteEntity baseSiteEntity = baseSiteSyncConverter.toBaseSiteEntity(synBaseSiteModel);
+        baseSiteSaveMapper.saveBaseSite(baseSiteEntity);
 
         //空调
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAirConditionList())) {
-            baseSiteSaveMapper.saveAirConditionList(baseSiteSyncConverter.toAirConditionEntityList(synBaseSiteModel.getAirConditionList()));
+            List<AirConditionEntity> airConditionEntityList = baseSiteSyncConverter.toAirConditionEntityList(synBaseSiteModel.getAirConditionList());
+            baseSiteSaveMapper.saveAirConditionList(airConditionEntityList);
         }
         //油机
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getOilModelList())) {
-            baseSiteSaveMapper.saveOilList(baseSiteSyncConverter.toOilEntityList(synBaseSiteModel.getOilModelList()));
+            List<OilEntity> oilEntityList = baseSiteSyncConverter.toOilEntityList(synBaseSiteModel.getOilModelList());
+            baseSiteSaveMapper.saveOilList(oilEntityList);
         }
         //5G AAU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAauModelList())) {
-            baseSiteSaveMapper.saveAAUList(baseSiteSyncConverter.toAAUEntityList(synBaseSiteModel.getAauModelList()));
+            List<AAUEntity> aauEntityList = baseSiteSyncConverter.toAAUEntityList(synBaseSiteModel.getAauModelList());
+            baseSiteSaveMapper.saveAAUList(aauEntityList);
         }
         //5G BBU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getBbuModelList())) {
-            baseSiteSaveMapper.saveBBUList(baseSiteSyncConverter.toBBUEntityList(synBaseSiteModel.getBbuModelList()));
+            List<BBUEntity> bbuEntityList = baseSiteSyncConverter.toBBUEntityList(synBaseSiteModel.getBbuModelList());
+            baseSiteSaveMapper.saveBBUList(bbuEntityList);
         }
         //5G RRU
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getRruModelList())) {
-            baseSiteSaveMapper.saveRRUList(baseSiteSyncConverter.toRRUEntityList(synBaseSiteModel.getRruModelList()));
+            List<RRUEntity> rruEntityList = baseSiteSyncConverter.toRRUEntityList(synBaseSiteModel.getRruModelList());
+            baseSiteSaveMapper.saveRRUList(rruEntityList);
         }
         //天线
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getAntennaList())) {
-            baseSiteSaveMapper.saveAntennaList(baseSiteSyncConverter.toAntennaEntityList(synBaseSiteModel.getAntennaList()));
+            List<AntennaEntity> antennaEntityList = baseSiteSyncConverter.toAntennaEntityList(synBaseSiteModel.getAntennaList());
+            baseSiteSaveMapper.saveAntennaList(antennaEntityList);
         }
         //抱杆
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getHoldingPoleList())) {
-            baseSiteSaveMapper.saveHoldingPoleList(baseSiteSyncConverter.toHoldingPoleEntityList(synBaseSiteModel.getHoldingPoleList()));
+            List<HoldingPoleEntity> holdingPoleEntityList = baseSiteSyncConverter.toHoldingPoleEntityList(synBaseSiteModel.getHoldingPoleList());
+            baseSiteSaveMapper.saveHoldingPoleList(holdingPoleEntityList);
         }
         //电源
         if (CollectionUtils.isNotEmpty(synBaseSiteModel.getPowerList())) {
-            baseSiteSaveMapper.savePowerList(baseSiteSyncConverter.toPowerEntityList(synBaseSiteModel.getPowerList()));
+            List<PowerEntity> powerEntityList = baseSiteSyncConverter.toPowerEntityList(synBaseSiteModel.getPowerList());
+            baseSiteSaveMapper.savePowerList(powerEntityList);
         }
     }
 }

@@ -3,11 +3,7 @@ package com.multithreading.entity;
 import lombok.Data;
 
 @Data
-public class AAUEntity {
-
-    private String baseSiteCode;
-
-    private String baseSiteName;
+public class AAUEntity extends BaseSiteDeviceEntity {
 
     private String deviceCode;
 

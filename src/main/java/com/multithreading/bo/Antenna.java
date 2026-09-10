@@ -9,10 +9,8 @@ import java.math.BigDecimal;
  * @date 2025/5/2 9:40
  */
 @Data
-public class Antenna {
+public class Antenna extends BaseSiteDeviceBO {
 
-    private String baseSiteCode;
-    private String baseSiteName;
     private String deviceCode;
     private String deviceName;
     private String brand;

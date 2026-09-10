@@ -9,10 +9,8 @@ import java.math.BigDecimal;
  * @date 2025/5/2 11:34
  */
 @Data
-public class HoldingPole {
+public class HoldingPole extends BaseSiteDeviceBO {
 
-    private String baseSiteCode;
-    private String baseSiteName;
     private String poleCode;
     private String poleName;
     private String poleType;

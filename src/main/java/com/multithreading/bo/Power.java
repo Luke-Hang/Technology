@@ -7,10 +7,8 @@ import lombok.Data;
  * @date 2025/5/2 11:36
  */
 @Data
-public class Power {
+public class Power extends BaseSiteDeviceBO {
 
-    private String baseSiteCode;
-    private String baseSiteName;
     private String deviceCode;
     private String deviceName;
     private String brand;

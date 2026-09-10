@@ -7,10 +7,8 @@ import lombok.Data;
  * @date 2025/5/2 11:37
  */
 @Data
-public class RRUModel {
+public class RRUModel extends BaseSiteDeviceBO {
 
-    private String baseSiteCode;
-    private String baseSiteName;
     private String deviceCode;
     private String deviceName;
     private String brand;

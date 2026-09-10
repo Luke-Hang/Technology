@@ -5,11 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class AntennaEntity {
-
-    private String baseSiteCode;
-
-    private String baseSiteName;
+public class AntennaEntity extends BaseSiteDeviceEntity {
 
     private String deviceCode;
 
