@@ -1,6 +1,6 @@
 package com.multithreading.controller;
 
-import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.BaseSiteSyncBO;
 import com.multithreading.model.District;
 import com.multithreading.service.SmsService;
 import com.multithreading.service.BaseSiteService;
@@ -57,7 +57,7 @@ public class DataSynchronizationController {
     public void getDataSynchronization(District district) {
         // 远程调用外部站点信息库接口,获取某个区域下的所有基站信息
         // 讲个基站信息数据封装成一个大 BaseSiteModel List
-        List<BaseSiteModel> baseSiteList = getBaseSiteList(district);
+        List<BaseSiteSyncBO> baseSiteList = getBaseSiteList(district);
         //将数据插入库中
         baseSiteService.baseSiteService(district, baseSiteList);
     }
@@ -68,7 +68,7 @@ public class DataSynchronizationController {
      * @param district
      * @return
      */
-    private List<BaseSiteModel> getBaseSiteList(District district) {
+    private List<BaseSiteSyncBO> getBaseSiteList(District district) {
 //        District district = new District("01", "雁塔区");
         logger.info("获取" + district.getDistrictName() + "所有基站信息，开始！");
 

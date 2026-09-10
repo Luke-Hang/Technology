@@ -1,6 +1,6 @@
 package com.multithreading.dao;
 
-import com.multithreading.model.BaseSiteSyncFail;
+import com.multithreading.entity.BaseSiteSyncFailEntity;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -16,5 +16,5 @@ public interface BaseSiteSyncFailMapper {
             "#{rawDataJson}, #{errorMessage}, #{status}",
             ")"
     })
-    void save(BaseSiteSyncFail failRecord);
+    void save(BaseSiteSyncFailEntity failRecord);
 }

@@ -1,10 +1,9 @@
 package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.BaseSiteSaveMapper;
-import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.BaseSiteSyncBO;
 import com.multithreading.model.District;
 import com.multithreading.service.BaseSiteService;
-import com.multithreading.utils.MsgThreadPool;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -40,11 +39,11 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
     private ThreadPoolTaskExecutor msgThreadPool;
 
     @Override
-    public void baseSiteService(District district, List<BaseSiteModel> list) {
+    public void baseSiteService(District district, List<BaseSiteSyncBO> list) {
         try {
             //将list放入线程安全容器 Collections中，保证线程安全
             // 将集合设置为线程安全的
-            List<BaseSiteModel> baseSiteList = Collections.synchronizedList(list);
+            List<BaseSiteSyncBO> baseSiteList = Collections.synchronizedList(list);
             // 将数据插入数据库操作做成一个多线程任务提交给线程池
             //也就是线程(executor)驱动任务(TranData) 通过实现Runnable来定义任务，最终由run方法执行任务
             /*
@@ -62,7 +61,7 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
             CountDownLatch countDownLatch = new CountDownLatch(baseSiteList.size());
 
             // 循环baseSiteList将数据插入库中,每个线程执行一个基站设备信息入库操作
-            for (BaseSiteModel baseSiteModel : baseSiteList) {
+            for (BaseSiteSyncBO baseSiteModel : baseSiteList) {
                 //组装任务
                 TaskData taskData = new TaskData();
                 //入库对象
@@ -85,7 +84,7 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
     @NoArgsConstructor
     private final class TaskData implements Runnable {
 
-        private BaseSiteModel baseSiteModel;
+        private BaseSiteSyncBO baseSiteModel;
         private CountDownLatch countDownLatch;
 
 
@@ -106,7 +105,7 @@ public class BaseSiteServiceImplOld implements BaseSiteService {
         /**
          * @param baseSiteModel
          */
-        private void saveSiteDatas(BaseSiteModel baseSiteModel) {
+        private void saveSiteDatas(BaseSiteSyncBO baseSiteModel) {
 /*            staticMapper.saveAntennaBatch(baseSiteModel.getAntennaList());
             staticMapper.saveAAUBatch(baseSiteModel.getAauModelList());
             staticMapper.saveBBUBatch(baseSiteModel.getBbuModelList());

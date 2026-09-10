@@ -1,9 +1,9 @@
 package com.multithreading.service;
 
-import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.BaseSiteSyncBO;
 
 public interface BaseSiteSaveService {
 
-    void saveBaseSiteData(BaseSiteModel synBaseSiteModel);
+    void saveBaseSiteData(BaseSiteSyncBO synBaseSiteModel);
 
 }

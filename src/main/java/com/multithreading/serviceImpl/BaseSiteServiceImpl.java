@@ -1,11 +1,10 @@
 package com.multithreading.serviceImpl;
 
-import com.multithreading.model.BaseSiteModel;
+import com.multithreading.model.BaseSiteSyncBO;
 import com.multithreading.model.District;
 import com.multithreading.service.BaseSiteSaveService;
 import com.multithreading.service.BaseSiteService;
 import com.multithreading.service.BaseSiteSyncFailService;
-import com.multithreading.utils.MsgThreadPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -50,7 +49,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
      * @param baseSiteModelList 某个行政区域下的所有基站信息
      */
     @Override
-    public void baseSiteService(District district, List<BaseSiteModel> baseSiteModelList) {
+    public void baseSiteService(District district, List<BaseSiteSyncBO> baseSiteModelList) {
         if (baseSiteModelList == null || baseSiteModelList.isEmpty()) {
             return;
         }
@@ -76,7 +75,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
             // 3. 子线程只处理自己拿到的 BaseSiteModel，并通过 CountDownLatch 通知主线程任务完成。
             // 4. CountDownLatch 可以被多个子线程安全调用 countDown()。
         // 因此，在 BaseSiteModel 及其内部设备 list 不被其他线程并发修改的前提下，这里没有 list 层面的线程安全问题。
-        List<BaseSiteModel> baseSiteList = new ArrayList<>(baseSiteModelList);
+        List<BaseSiteSyncBO> baseSiteList = new ArrayList<>(baseSiteModelList);
         String batchNo = UUID.randomUUID().toString();
 
         //使用同步工具类CountDownLatch，并使用他的计数器功能，让主线程等待入库线程执行完入库任务再继续执行
@@ -87,7 +86,7 @@ public class BaseSiteServiceImpl implements BaseSiteService {
         try {
             // 提交任务
             // 循环 baseSiteList 将数据插入库中,每个线程执行一个基站设备信息入库操作
-            for (BaseSiteModel synBaseSiteModel : baseSiteList) {
+            for (BaseSiteSyncBO synBaseSiteModel : baseSiteList) {
                 // 每条基站数据封装成任务提交线程池，异步执行 saveSiteDatas() 入库
                 // executor 异步执行 提交的Runnable 任务 synBaseSiteModel
                 /**
@@ -101,16 +100,11 @@ public class BaseSiteServiceImpl implements BaseSiteService {
                     try {
                         baseSiteSaveService.saveBaseSiteData(synBaseSiteModel);
                     } catch (Exception e) {
-                        //某个基站入库失败：它自己的事务会回滚
-                        //countDownLatch.countDown() 仍然会执行，不会导致主线程一直等；
-                        try {
-                            baseSiteSyncFailService.saveFailRecord(batchNo, district, synBaseSiteModel, e);
-                        } catch (Exception recordException) {
-                            e.addSuppressed(recordException);
-                        }
-                        failures.add(e);
+                        handleSaveFailure(batchNo, district, synBaseSiteModel, e, failures);
                     } finally {
                         //调用countDownLatch countDown()方法将计数器countDownLatch-1，标记已经完成一个任务
+                        //某个基站入库失败：它自己的事务会回滚
+                        //countDownLatch.countDown() 仍然会执行，不会导致主线程一直等；
                         countDownLatch.countDown();
                     }
                 });
@@ -132,5 +126,23 @@ public class BaseSiteServiceImpl implements BaseSiteService {
             Thread.currentThread().interrupt();
             throw new RuntimeException("基站数据同步被中断", e);
         }
+    }
+
+    /**
+     *
+     * @param batchNo 批处理编号
+     * @param district
+     * @param baseSiteModel
+     * @param exception
+     * @param failures
+     */
+    private void handleSaveFailure(String batchNo, District district, BaseSiteSyncBO baseSiteModel,
+                                   Exception exception, Queue<Exception> failures) {
+        try {
+            baseSiteSyncFailService.saveFailRecord(batchNo, district, baseSiteModel, exception);
+        } catch (Exception recordException) {
+            exception.addSuppressed(recordException);
+        }
+        failures.add(exception);
     }
 }

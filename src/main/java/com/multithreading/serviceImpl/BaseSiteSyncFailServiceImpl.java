@@ -3,19 +3,11 @@ package com.multithreading.serviceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.multithreading.dao.BaseSiteSyncFailMapper;
-import com.multithreading.model.AAUModel;
-import com.multithreading.model.AirCondition;
-import com.multithreading.model.Antenna;
-import com.multithreading.model.BBUModel;
-import com.multithreading.model.BaseSiteModel;
-import com.multithreading.model.BaseSiteSyncFail;
+import com.multithreading.entity.BaseSiteSyncFailEntity;
+import com.multithreading.model.BaseSiteSyncBO;
 import com.multithreading.model.District;
-import com.multithreading.model.HoldingPole;
-import com.multithreading.model.OilModel;
-import com.multithreading.model.Power;
-import com.multithreading.model.RRUModel;
 import com.multithreading.service.BaseSiteSyncFailService;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -35,17 +27,15 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
-    public void saveFailRecord(String batchNo, District district, BaseSiteModel baseSiteModel, Exception exception) {
-        SiteInfo siteInfo = extractSiteInfo(baseSiteModel);
-
-        BaseSiteSyncFail failRecord = new BaseSiteSyncFail();
+    public void saveFailRecord(String batchNo, District district, BaseSiteSyncBO baseSiteModel, Exception exception) {
+        BaseSiteSyncFailEntity failRecord = new BaseSiteSyncFailEntity();
         failRecord.setBatchNo(batchNo);
         if (district != null) {
             failRecord.setDistrictCode(district.getDistrictNo());
             failRecord.setDistrictName(district.getDistrictName());
         }
-        failRecord.setBaseSiteCode(defaultString(siteInfo.baseSiteCode, DEFAULT_BASE_SITE_CODE));
-        failRecord.setBaseSiteName(siteInfo.baseSiteName);
+        failRecord.setBaseSiteCode(StringUtils.defaultIfBlank(getBaseSiteCode(baseSiteModel), DEFAULT_BASE_SITE_CODE));
+        failRecord.setBaseSiteName(getBaseSiteName(baseSiteModel));
         failRecord.setRawDataJson(toJson(baseSiteModel));
         failRecord.setErrorMessage(buildErrorMessage(exception));
         failRecord.setStatus(FAILED_STATUS);
@@ -53,7 +43,7 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
         baseSiteSyncFailMapper.save(failRecord);
     }
 
-    private String toJson(BaseSiteModel baseSiteModel) {
+    private String toJson(BaseSiteSyncBO baseSiteModel) {
         try {
             return objectMapper.writeValueAsString(baseSiteModel);
         } catch (JsonProcessingException e) {
@@ -68,59 +58,18 @@ public class BaseSiteSyncFailServiceImpl implements BaseSiteSyncFailService {
         return exception.getClass().getName() + ": " + exception.getMessage();
     }
 
-    private SiteInfo extractSiteInfo(BaseSiteModel baseSiteModel) {
+    private String getBaseSiteCode(BaseSiteSyncBO baseSiteModel) {
         if (baseSiteModel == null) {
-            return new SiteInfo(null, null);
+            return null;
         }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getAirConditionList())) {
-            AirCondition first = baseSiteModel.getAirConditionList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getOilModelList())) {
-            OilModel first = baseSiteModel.getOilModelList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getAauModelList())) {
-            AAUModel first = baseSiteModel.getAauModelList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getBbuModelList())) {
-            BBUModel first = baseSiteModel.getBbuModelList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getRruModelList())) {
-            RRUModel first = baseSiteModel.getRruModelList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getAntennaList())) {
-            Antenna first = baseSiteModel.getAntennaList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getHoldingPoleList())) {
-            HoldingPole first = baseSiteModel.getHoldingPoleList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        if (CollectionUtils.isNotEmpty(baseSiteModel.getPowerList())) {
-            Power first = baseSiteModel.getPowerList().get(0);
-            return new SiteInfo(first.getBaseSiteCode(), first.getBaseSiteName());
-        }
-        return new SiteInfo(null, null);
+        return baseSiteModel.getBaseSiteCode();
     }
 
-    private String defaultString(String value, String defaultValue) {
-        if (value == null || value.trim().isEmpty()) {
-            return defaultValue;
+    private String getBaseSiteName(BaseSiteSyncBO baseSiteModel) {
+        if (baseSiteModel == null) {
+            return null;
         }
-        return value;
+        return baseSiteModel.getBaseSiteName();
     }
 
-    private static class SiteInfo {
-        private final String baseSiteCode;
-        private final String baseSiteName;
-
-        private SiteInfo(String baseSiteCode, String baseSiteName) {
-            this.baseSiteCode = baseSiteCode;
-            this.baseSiteName = baseSiteName;
-        }
-    }
 }
