@@ -1,13 +1,15 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 /**
  * @author xiehang
- * @date 2025/5/2 11:37
+ * @date 2025/5/2 9:40
  */
 @Data
-public class RRUModel {
+public class Antenna {
 
     private String baseSiteCode;
     private String baseSiteName;
@@ -15,7 +17,9 @@ public class RRUModel {
     private String deviceName;
     private String brand;
     private String model;
-    private String frequencyBand;
+    private String antennaType;
+    private BigDecimal directionAngle;
+    private BigDecimal downTilt;
     private String installPosition;
     private String status;
 }

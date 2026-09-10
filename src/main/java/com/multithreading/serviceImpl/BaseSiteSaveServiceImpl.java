@@ -1,7 +1,7 @@
 package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.BaseSiteSaveMapper;
-import com.multithreading.model.BaseSiteSyncBO;
+import com.multithreading.bo.BaseSiteSyncBO;
 import com.multithreading.service.BaseSiteSaveService;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;

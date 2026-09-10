@@ -1,13 +1,13 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 
 /**
  * @author xiehang
- * @date 2025/5/1 22:46
+ * @date 2025/5/2 11:36
  */
 @Data
-public class OilModel {
+public class Power {
 
     private String baseSiteCode;
     private String baseSiteName;
@@ -15,6 +15,7 @@ public class OilModel {
     private String deviceName;
     private String brand;
     private String model;
-    private String powerCapacity;
+    private String powerType;
+    private String capacity;
     private String status;
 }

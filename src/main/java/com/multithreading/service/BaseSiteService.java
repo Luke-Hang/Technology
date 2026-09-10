@@ -2,8 +2,8 @@ package com.multithreading.service;
 
 import java.util.List;
 
-import com.multithreading.model.BaseSiteSyncBO;
-import com.multithreading.model.District;
+import com.multithreading.bo.BaseSiteSyncBO;
+import com.multithreading.bo.District;
 
 
 public interface BaseSiteService {

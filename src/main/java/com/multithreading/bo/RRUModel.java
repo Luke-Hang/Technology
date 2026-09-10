@@ -1,13 +1,13 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 
 /**
  * @author xiehang
- * @date 2025/5/1 22:47
+ * @date 2025/5/2 11:37
  */
 @Data
-public class AirCondition {
+public class RRUModel {
 
     private String baseSiteCode;
     private String baseSiteName;
@@ -15,6 +15,7 @@ public class AirCondition {
     private String deviceName;
     private String brand;
     private String model;
+    private String frequencyBand;
     private String installPosition;
     private String status;
 }

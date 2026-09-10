@@ -1,13 +1,13 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 
 /**
  * @author xiehang
- * @date 2025/5/2 11:36
+ * @date 2025/5/1 22:47
  */
 @Data
-public class Power {
+public class AirCondition {
 
     private String baseSiteCode;
     private String baseSiteName;
@@ -15,7 +15,6 @@ public class Power {
     private String deviceName;
     private String brand;
     private String model;
-    private String powerType;
-    private String capacity;
+    private String installPosition;
     private String status;
 }

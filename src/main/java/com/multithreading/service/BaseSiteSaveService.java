@@ -1,6 +1,6 @@
 package com.multithreading.service;
 
-import com.multithreading.model.BaseSiteSyncBO;
+import com.multithreading.bo.BaseSiteSyncBO;
 
 public interface BaseSiteSaveService {
 

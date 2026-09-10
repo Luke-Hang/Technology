@@ -1,4 +1,4 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import java.util.Collections;
 import java.util.Map;

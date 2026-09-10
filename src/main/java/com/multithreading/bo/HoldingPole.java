@@ -1,4 +1,4 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 

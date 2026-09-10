@@ -1,8 +1,8 @@
 package com.multithreading.serviceImpl;
 
 import com.multithreading.dao.BaseSiteSaveMapper;
-import com.multithreading.model.BaseSiteSyncBO;
-import com.multithreading.model.District;
+import com.multithreading.bo.BaseSiteSyncBO;
+import com.multithreading.bo.District;
 import com.multithreading.service.BaseSiteService;
 import lombok.AllArgsConstructor;
 import lombok.Data;

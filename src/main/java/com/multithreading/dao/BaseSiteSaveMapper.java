@@ -2,7 +2,7 @@ package com.multithreading.dao;
 
 import java.util.List;
 
-import com.multithreading.model.*;
+import com.multithreading.bo.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

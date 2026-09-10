@@ -1,7 +1,7 @@
 package com.multithreading.controller;
 
-import com.multithreading.model.BaseSiteSyncBO;
-import com.multithreading.model.District;
+import com.multithreading.bo.BaseSiteSyncBO;
+import com.multithreading.bo.District;
 import com.multithreading.service.SmsService;
 import com.multithreading.service.BaseSiteService;
 import org.slf4j.Logger;

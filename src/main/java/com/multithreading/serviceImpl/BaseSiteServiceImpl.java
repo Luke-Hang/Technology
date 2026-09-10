@@ -1,7 +1,7 @@
 package com.multithreading.serviceImpl;
 
-import com.multithreading.model.BaseSiteSyncBO;
-import com.multithreading.model.District;
+import com.multithreading.bo.BaseSiteSyncBO;
+import com.multithreading.bo.District;
 import com.multithreading.service.BaseSiteSaveService;
 import com.multithreading.service.BaseSiteService;
 import com.multithreading.service.BaseSiteSyncFailService;

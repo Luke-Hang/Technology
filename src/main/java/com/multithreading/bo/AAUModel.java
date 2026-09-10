@@ -1,13 +1,13 @@
-package com.multithreading.model;
+package com.multithreading.bo;
 
 import lombok.Data;
 
 /**
  * @author xiehang
- * @date 2025/5/2 9:27
+ * @date 2025/5/1 23:47
  */
 @Data
-public class BBUModel {
+public class AAUModel {
 
     private String baseSiteCode;
     private String baseSiteName;
@@ -15,7 +15,7 @@ public class BBUModel {
     private String deviceName;
     private String brand;
     private String model;
-    private String roomName;
-    private String cabinetNo;
+    private String frequencyBand;
+    private String installPosition;
     private String status;
 }
