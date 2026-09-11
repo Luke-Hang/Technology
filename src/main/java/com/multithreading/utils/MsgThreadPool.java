@@ -10,6 +10,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class MsgThreadPool {
 
+    private final DataSyncThreadPoolProperties threadPoolProperties;
+
+    public MsgThreadPool(DataSyncThreadPoolProperties threadPoolProperties) {
+        this.threadPoolProperties = threadPoolProperties;
+    }
+
     @Bean("dataSyncThreadPool")
     public ThreadPoolTaskExecutor getPoolInstance() {
 /*		java线程池如何合理配置核心线程数
@@ -18,24 +24,18 @@ public class MsgThreadPool {
 				IO密集型(读写密集型):   核心线程数 = CPU核数 * 2=2n
 				CPU密集型(计算密集型):  核心线程数 = CPU核数 + 1=n+1
 			*/
-        //获取CPU核数
-        int cpuNum = Runtime.getRuntime().availableProcessors();
         //使用Spring提供的线程池ThreadPoolTaskExecutor
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         //设置核心线程数
-        executor.setCorePoolSize(cpuNum);
+        executor.setCorePoolSize(threadPoolProperties.resolveCoreSize());
         //设置最大线程数
-        executor.setMaxPoolSize(2 * cpuNum);
+        executor.setMaxPoolSize(threadPoolProperties.resolveMaxSize());
 
-        //我们生产最终是 queueCapacity = 500，原因是这个线程池用于基站数据批量入库，
-        //这个线程池用于基站数据批量入库，属于 IO 密集型任务，瓶颈不在 CPU，而在数据库连接池和写库吞吐。
-        //阻塞队列大小我们生产最终定的是 500，这是根据日常单批数据量、峰值提交速度和压测结果调整出来的。
-        // 500 可以覆盖正常峰值下的短时间任务堆积。
-        //如果队列再大，虽然不容易触发拒绝策略，但会导致任务排队时间变长、内存占用增加。
-        //同时我们使用 CallerRunsPolicy，当线程和队列都满了以后，由调用线程自己执行任务，降低提交速度，避免继续把压力打到数据库上。
-
-        // 500 是结合业务量和压测定的，不是随便写死的；队列有界是为了控制内存和延迟；CallerRunsPolicy 是为了反压保护数据库。
-        executor.setQueueCapacity(500);
+        // 队列大小不会写死在代码里，我们通过 @ConfigurationProperties 从配置中心或环境配置读取。
+        // 代码里只保留默认兜底值，不同环境根据机器配置、数据库连接池、压测结果配置不同的 queue-capacity。
+        // 比如测试环境 200，生产环境 1000，都不需要改代码。
+        // queueCapacity = 峰值生产速率 × 可接受排队时间 - 最大工作线程数
+        executor.setQueueCapacity(threadPoolProperties.getQueueCapacity());
         /**
          * 线程池队列：https://blog.csdn.net/qq_39666711/article/details/140486386
          * 	1.无界队列：
@@ -68,7 +68,7 @@ public class MsgThreadPool {
          *  也就是救急线程数，这里的时间就是救急线程存活的时间)
          */
         //非核心线程存活时间,默认60s
-        executor.setKeepAliveSeconds(60);
+        executor.setKeepAliveSeconds(threadPoolProperties.getKeepAliveSeconds());
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 		//设置线程池拒绝策略
 			/*https://blog.csdn.net/suifeng629/article/details/98884972

@@ -66,6 +66,13 @@ app:
   timeout: 5000
   retry: 3
 
+data-sync:
+  thread-pool:
+    # Defaults for local/dev. Override in application-prod.yml, config center, or env vars.
+    core-size: 8
+    max-size: 16
+    queue-capacity: 500
+    keep-alive-seconds: 60
 
 
 
