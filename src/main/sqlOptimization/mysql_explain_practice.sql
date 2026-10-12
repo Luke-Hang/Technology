@@ -168,12 +168,18 @@ SELECT COUNT(*) AS payments_count FROM payments;
 SELECT * FROM orders WHERE customer_id = 100; 从 orders 表找出 customer_id = 100 的记录
 没有索引时,MySQL 可能需要扫描整张表，逐行判断 customer_id 是否等于 100,最终找出 customer_id = 100 的记录。
 
-给 customer_id 创建索引后,InnoDB 会创建并维护一棵以 customer_id 为索引键的 B+Tree,这个B+Tree 按照 customer_id 的值，组织和排序索引记录。
+给 customer_id 创建索引后,
+InnoDB 会创建并维护一棵以 customer_id 为索引键的 B+Tree,这个B+Tree 即按照 customer_id 的值，组织和排序索引记录。
 再次查询时,MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。
 例如：
 CREATE INDEX idx_orders_customer_id ON orders(customer_id); 给 customer_id 创建索引后
 再次执行 SELECT * FROM orders WHERE customer_id = 100; 再次从 orders 表找出 customer_id = 100 的记录
 MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。这样可以减少扫描范围，提高查询效率。
+
+总结:
+给某个字段加了索引,InnoDB 会创建并维护一颗以此为字段为索引键的 B+Tree,
+即按照此为字段的值，组织和排序索引记录。
+再次查询时,MySQL 就可以先通过这棵 B+Tree 快速定位符合条件的数据，而不是扫描整张表。
 
 最常见的是优化 WHERE 条件查询，同时也可以优化 JOIN、ORDER BY、GROUP BY 等操作。 
 
@@ -219,7 +225,7 @@ EXPLAIN SELECT * FROM orders WHERE total_amount BETWEEN 4900 AND 4910;
 -- MySQL 会先通过 customer_id 索引找到:customer_id = 100,id = 123 这两个字段的值。
 -- 然后再拿 id = 123 去主键索引里查整行数据，得到 total_amount,status,created_at 等字段的值
 -- 这个“再根据主键去查整行数据”的过程，就叫回表。
--- 回表 = 二级索引 → 找到主键 → 主键索引 → 获取其他字段。
+-- 回表 = 二级索引 → 找到主键 → 主键索引回表查询 → 获取其他字段。
 --
 -- SELECT * FROM orders WHERE customer_id = 100
 --         ↓
@@ -230,6 +236,10 @@ EXPLAIN SELECT * FROM orders WHERE total_amount BETWEEN 4900 AND 4910;
 -- 拿 id = 123 查询主键（聚簇）索引
 --         ↓
 -- 得到 total_amount、status、created_at 等其他字段 这一步“根据主键再次查询完整数据”，就是回表。
+
+总结：
+回表：先通过二级索引，找到对应记录的主键，再通过主键查询其他字段，这里再查一次就是回表。
+覆盖索引：查询所需字段就在索引里，不需要再去主表查一遍
 
 -- 观察点：只查索引字段时更容易走覆盖索引，Extra 可能出现 Using index。
 EXPLAIN SELECT total_amount FROM orders WHERE total_amount > 4000;
@@ -369,10 +379,10 @@ LIMIT 20;
 --    改法：补上最左列条件，或按查询场景创建 (status, created_at) 索引。
 --    说明：如果查询场景是 store_id = ? AND status = ? AND created_at 范围查询，更适合创建 (store_id, status, created_at)；
 --
---          WHERE 条件的书写顺序不影响索引使用，例如先写 created_at，再写 store_id、status，
---          优化器仍然可以按 (store_id, status, created_at) 的索引顺序使用索引。
---          真正要注意的是索引列顺序：如果索引建成 (created_at, store_id, status)，
---          会先按 created_at 做范围扫描，后面的 store_id、status 利用效果可能受限。
+--      WHERE 条件的书写顺序不影响索引使用，例如先写 created_at，再写 store_id、status，
+--      优化器仍然可以按 (store_id, status, created_at) 的索引顺序使用索引。
+--      真正要注意的是索引列顺序：如果索引建成 (created_at, store_id, status)，
+--      会先按 created_at 做范围扫描，后面的 store_id、status 利用效果可能受限。
 --
 
 -- 2. 索引列，使用函数或表达式。
@@ -393,7 +403,9 @@ LIMIT 20;
 -- 5. 范围查询后面的联合索引列，难以继续用于精确过滤或排序。
 --    示例：索引是 (created_at, store_id, status)，WHERE created_at > '2025-01-01' AND store_id = 8
 --    说明：created_at 是范围条件，后面的 store_id、status 利用效果可能受限。
---
+
+-- 记忆：左函配转范-坐寒配软饭
+
 可以，回答到第 5 个基本够用了，尤其是普通面试。
 -- 6. SELECT * 导致大量回表，索引收益下降。
 --    示例：WHERE total_amount > 4000 命中很多行，并且查询所有列。
@@ -418,3 +430,331 @@ LIMIT 20;
 -- 10. 使用不等于条件时，索引效果通常不稳定。
 --     示例：WHERE status <> 0 或 WHERE status != 0
 --     说明：如果返回数据比例很高，优化器可能选择全表扫描。
+
+
+SELECT COUNT(*) AS customers_count FROM customers;
+-- 2,0000
+
+SELECT COUNT(*) AS products_count FROM products;
+-- 5000
+
+SELECT COUNT(*) AS orders_count FROM orders;
+-- 10,0000
+
+SELECT COUNT(*) AS order_items_count FROM order_items;
+-- 30,0000
+
+SELECT COUNT(*) AS payments_count FROM payments;
+-- 9,5000
+
+======================================== sql 优化实战========================================
+
+-- EXPLAIN,重点看 
+-- 1. type 看访问类型，重点关注有没有 ALL 全表扫描  			 ref > range > index > ALL;
+-- 2. key  看实际使用了哪个索引，如果是 NULL，说明没有使用索引;
+-- 3. rows 看预估要扫描多少行，这个值越大，说明查询成本可能越高。优化后通常希望 rows 明显下降;
+-- 4. Extra 看额外信息，Using where/Using index condition 用 WHERE 过滤/用了索引条件下推;
+
+
+-- 练习 0: 主键/唯一索引查询。
+-- 作用：主键和唯一索引等值查询通常会变成 const，rows 通常很小。
+-- 观察点：
+-- customers 使用 PRIMARY, 走主键索引 PRIMARY
+-- orders 使用 uk_orders_order_no，因为 order_no 没有索引。所以全表扫描，不走索引
+
+EXPLAIN SELECT * FROM customers WHERE id = 1;
+-- type		key			rows		Extra
+-- const	PRIMARY		1			[NULL]
+
+EXPLAIN SELECT * FROM orders WHERE order_no = 'ORD-00000001';
+-- type		key			  rows		Extra
+-- ALL		[NULL]		98124		Using where
+
+
+======================================================================================
+-- 练习 1: 普通范围查询，索引不一定会被使用。
+-- 作用：观察 possible_keys 和 key 的区别；possible_keys 有值只代表“可能用”，key 有值才代表“实际使用”。
+-- 说明：total_amount > 4000 是普通范围查询，命中行数较多，并且 SELECT * 需要回表，MySQL 可能仍然选择全表扫描。
+EXPLAIN SELECT * FROM orders WHERE total_amount > 4000;
+-- id		select_type	table		partitions	type	possible_keys	key			key_len		ref			rows		filtered	Extra
+-- 1		SIMPLE		orders		[NULL]		ALL		[NULL]			[NULL]		[NULL]		[NULL]		98,124		33.33		Using where
+
+-- type		key			  rows		  Extra
+-- ALL		[NULL]		98,124		Using where
+
+-- SHOW INDEX FROM orders;
+CREATE INDEX idx_orders_total_amount ON orders (total_amount);
+-- DROP INDEX idx_orders_total_amount ON orders;
+-- 观察点：加索引后，possible_keys 可能出现 idx_orders_total_amount，但 key 仍可能是 NULL，因为 total_amount > 4000 是普通范围查询
+EXPLAIN SELECT * FROM orders WHERE total_amount > 4000;
+-- id		select_type	table		partitions	type		possible_keys					key		key_len		ref			rows			filtered		Extra
+-- 1		SIMPLE			orders	[NULL]		ALL		idx_orders_total_amount	[NULL]	[NULL]		[NULL]		98,124		38.65		Using where
+
+-- type		key			  rows			  Extra
+-- ALL		[NULL]		98,124			Using where
+
+-- 观察点：条件范围更小时，索引更可能真正生效，type 更可能变成 range。
+-- 说明：BETWEEN 是范围查询，B+Tree 索引可以用于范围定位；命中行数较少时，优化器更可能选择使用索引。
+EXPLAIN SELECT * FROM orders WHERE total_amount BETWEEN 4900 AND 4910;
+-- id	select_type	table	partitions	type	possible_keys				key							key_len		ref			rows		filtered		Extra
+-- 1	SIMPLE		orders	[NULL]		range	idx_orders_total_amount		idx_orders_total_amount		6			[NULL]		202		100			Using index condition
+
+-- type		key							          rows		Extra
+-- range	idx_orders_total_amount		202			Using index condition
+
+
+-- 观察点：只查索引字段时更容易走覆盖索引，Extra 可能出现 Using index。
+EXPLAIN SELECT total_amount FROM orders WHERE total_amount > 4000
+-- type		key							          rows		Extra
+-- range	idx_orders_total_amount		37928		Using where; Using index
+
+======================================================================================
+-- 练习 2: 联合索引的最左前缀。
+-- 作用：理解联合索引 (store_id, status, created_at) 为什么适合 store_id + status + created_at 排序/范围场景。
+-- 观察点：key 应该使用 idx_orders_store_status_created，type 通常是 ref/range，rows 会明显减少。
+SHOW INDEX FROM orders;
+
+EXPLAIN SELECT * FROM orders
+WHERE store_id = 8 
+AND status = 3
+ORDER BY created_at DESC
+LIMIT 20;
+-- type		key				  rows			Extra
+-- ALL		[NULL]			98124			Using where; Using filesort
+
+SHOW INDEX FROM orders;
+CREATE INDEX idx_orders_store_status_created ON orders (store_id, status, created_at);
+-- DROP INDEX idx_orders_store_status_created ON orders;
+
+EXPLAIN SELECT * FROM orders
+WHERE store_id = 8 
+AND status = 3
+ORDER BY created_at DESC
+LIMIT 20;
+-- type		key										              rows			Extra
+-- ref		idx_orders_store_status_created			1667			Using where; Backward index scan
+
+======================================================================================
+-- 练习 3: 不满足联合索引最左前缀。
+-- 作用：理解只查 status 时，无法高效使用 (store_id, status, created_at)，因为跳过了最左列 store_id。
+-- 观察点：加新索引前，可能出现 type=ALL、Using filesort 或扫描行数较大。
+CREATE INDEX idx_orders_store_status_created ON orders (store_id, status, created_at);
+
+SHOW INDEX FROM orders;
+EXPLAIN SELECT * FROM orders
+WHERE status = 3
+ORDER BY created_at DESC
+LIMIT 20;
+-- type		key				  rows			Extra
+-- ALL		[NULL]			98124			Using where; Using filesort
+
+CREATE INDEX idx_orders_status_created ON orders (status, created_at);
+-- DROP INDEX idx_orders_status_created ON orders;
+
+-- 观察点：加 (status, created_at) 后，key 应该变成 idx_orders_status_created，排序也更容易利用索引。
+EXPLAIN SELECT * FROM orders
+WHERE status = 3
+ORDER BY created_at DESC
+LIMIT 20;
+-- type		key								          rows			Extra
+-- ref		idx_orders_status_created		49062			Using where; Backward index scan
+
+======================================================================================
+
+-- 练习 4: 函数导致索引难以利用。
+-- 作用：理解不要在索引列上包函数；DATE(created_at) 会让 MySQL 难以直接按 idx_orders_created 做范围定位。
+-- 观察点：第一条可能扫描更多行；第二条改成时间范围后，更容易使用 idx_orders_created。
+
+EXPLAIN SELECT * FROM orders
+WHERE created_at >= '2025-01-01'
+  AND created_at < '2025-01-02';
+-- type		key			  rows			Extra
+-- ALL		[NULL]		98124			Using where
+
+SHOW INDEX FROM orders;
+CREATE INDEX idx_orders_created ON orders (created_at);
+-- DROP INDEX idx_orders_created ON orders;
+
+
+EXPLAIN SELECT * FROM orders
+WHERE created_at >= '2025-01-01'
+  AND created_at < '2025-01-02';
+-- type		key						        rows			Extra
+-- range	idx_orders_created		143				Using index condition
+
+
+-- DATE函数导致索引难以利用
+EXPLAIN SELECT * FROM orders
+WHERE DATE(created_at) = '2025-01-01';
+-- type		key			  rows			Extra
+-- ALL		[NULL]		98124			Using where
+
+======================================================================================
+
+-- 练习 5: 覆盖索引。
+-- 作用：理解查询字段都在索引里时，MySQL 可以只读索引，不回表。
+-- 观察点：idx_orders_customer_created 包含 customer_id 和 created_at，Extra 可能出现 Using index。
+
+-- 覆盖索引:查询字段都在索引里时，MySQL 可以只读索引，不回表。
+CREATE INDEX idx_orders_created ON orders (created_at);
+show index from orders;
+
+EXPLAIN SELECT customer_id, created_at FROM orders
+WHERE customer_id = 123
+ORDER BY created_at DESC
+LIMIT 10;
+-- 这里命中了 idx_orders_created(created_at) 索引，type=index 代表扫描索引树，而不是扫描数据表，类似“索引版的全表扫描”
+-- type		key						        rows			Extra
+-- index	idx_orders_created		10				Using where; Backward index scan
+
+SHOW INDEX FROM orders;
+CREATE INDEX idx_orders_customer_created ON orders (customer_id, created_at);
+-- DROP INDEX idx_orders_customer_created ON orders;
+
+EXPLAIN SELECT customer_id, created_at FROM orders
+WHERE customer_id = 123
+ORDER BY created_at DESC
+LIMIT 10;
+-- type		key								            rows			Extra
+-- ref		idx_orders_customer_created		5				  Using where; Backward index scan; Using index
+
+
+-- 练习 6: JOIN 的驱动表和连接索引。
+-- 作用：观察多表 JOIN 时，每张表各自使用哪个索引，以及 rows 是否合理。
+-- 观察点：orders 应优先用 idx_orders_store_status_created 缩小范围；customers 用主键；payments 用 idx_payments_order。
+SHOW INDEX FROM payments;
+CREATE INDEX idx_payments_order ON payments (order_id);
+-- DROP INDEX idx_payments_order ON payments;
+
+EXPLAIN SELECT o.id, o.order_no, c.name, p.pay_method
+FROM orders o
+JOIN customers c ON c.id = o.customer_id
+LEFT JOIN payments p ON p.order_id = o.id
+WHERE o.store_id = 8
+  AND o.status = 3
+  AND o.created_at >= '2025-01-01'
+  AND o.created_at < '2025-02-01'
+ORDER BY o.created_at DESC
+LIMIT 50;
+加索引前：
+
+-- id	select_type	table	partitions	type	possible_keys	key	key_len	ref	rows	filtered	Extra
+-- 1	SIMPLE		  o		  [NULL]		  range	idx_orders_store_status_created,idx_orders_status_created,idx_orders_created,idx_orders_customer_created	idx_orders_store_status_created	10	[NULL]	96	100	Using index condition; Using temporary; Using filesort
+-- 1	SIMPLE		  c		  [NULL]		  eq_ref	PRIMARY	PRIMARY	8	explain_lab.o.customer_id	1	100	[NULL]
+-- 1	SIMPLE		  p		  [NULL]		  ALL		[NULL]	[NULL]	[NULL]	[NULL]	89,518	100	Using where; Using join buffer (Block Nested Loop)
+
+
+-- table	type	  key									              rows	  Extra
+-- o		  range	  idx_orders_store_status_created		96		  Using index condition; Using temporary; Using filesort
+-- c		  eq_ref	PRIMARY								            1		    [NULL]	
+-- p		  ALL		  [NULL]								            89518	  Using where; Using join buffer (Block Nested Loop)
+
+-- orders o 	选择了联合索引 idx_orders_store_status_created(store_id, status, created_at)
+-- 对应
+-- WHERE o.store_id = 8
+--   AND o.status = 3
+--   AND o.created_at >= '2025-01-01'
+--   AND o.created_at < '2025-02-01'
+-- ORDER BY o.created_at DESC
+
+-- customers c	选择了主键索引 PRIMARY
+-- 对应
+-- JOIN customers c ON c.id = o.customer_id c.id 是主键 PRIMARY
+
+payments p key = NULL, type = ALL, payments 没有可用索引。
+-- 对应
+-- LEFT JOIN payments p ON p.order_id = o.id. 对于 JOIN，MySQL 可能不得不扫描大量 payments 数据。
+-- 因此对 order_id 应该考虑加索引
+
+CREATE INDEX idx_payments_order ON payments (order_id);
+-- table	type	  key									              rows	Extra
+-- o		  range	  idx_orders_store_status_created		96		Using index condition; Backward index scan
+-- c		  eq_ref	PRIMARY								            1		  [NULL]	
+-- p		  ref		  idx_payments_order					      1		  Using where; Using join buffer (Block Nested Loop)
+
+-- Using index condition; Backward index scan 
+-- Using index condition：先用索引里的字段过滤一部分记录，减少不必要的回表。
+-- Backward index scan：反向扫描索引，通常是为了满足 ORDER BY ... DESC，直接从 B+Tree 的后面往前读，避免额外排序。
+
+
+-- Using where; Using join buffer (Block Nested Loop)
+-- Using where 表示：从表里读到记录后，还要再根据 WHERE 或 JOIN 条件做过滤
+-- Using join buffer (Block Nested Loop) 表示：做表连接时，没有合适的索引可直接定位匹配行，
+-- 于是 MySQL 使用 Join Buffer，并采用 Block Nested Loop 方式做关联。
+
+-- 练习 7: LIKE 前缀匹配和前置通配符。
+-- 作用：理解 'abc%' 可以利用 B+Tree 索引范围扫描，而 '%abc' 通常无法高效利用普通索引。
+-- 观察点：加 email 索引后，'customer\_12%' 更可能使用索引范围扫描，'%12@demo.local' 通常仍然难以高效利用普通 B+Tree 索引。
+EXPLAIN SELECT * FROM customers WHERE email LIKE 'customer\_12%';
+-- type		key			  rows	Extra
+-- ALL		[NULL]		20179	Using where
+
+EXPLAIN SELECT * FROM customers WHERE email LIKE '%12@demo.local';
+-- type		key			  rows	Extra
+-- ALL		[NULL]		20179	Using where
+
+
+SHOW INDEX FROM customers;
+CREATE INDEX idx_customers_email ON customers (email);
+-- DROP INDEX idx_customers_email ON customers;
+
+
+-- 理解 'abc%' 可以利用 B+Tree 索引范围扫描，而 '%abc' 通常无法高效利用普通索引
+EXPLAIN SELECT * FROM customers WHERE email LIKE 'customer\_12%';
+-- type		key						        rows	Extra
+-- range	idx_customers_email		1111	Using index condition
+
+EXPLAIN SELECT * FROM customers WHERE email LIKE '%12@demo.local';
+-- type		key			  rows	Extra
+-- ALL		[NULL]		20179	Using where
+
+
+-- 练习 8: GROUP BY 优化。
+-- 作用：观察 GROUP BY 在没有合适索引时，可能出现 Using temporary / Using filesort。
+-- 观察点：加索引前后对比 key、rows、Extra，理解索引列顺序会影响过滤和分组成本。
+EXPLAIN SELECT store_id, status, COUNT(*), SUM(total_amount)
+FROM orders
+WHERE created_at >= '2025-01-01'
+GROUP BY store_id, status;
+-- type		key			  rows	Extra
+-- ALL		[NULL]		98124	Using where; Using temporary
+
+-- Using temporary 表示：MySQL 为了完成查询，创建了临时表来保存中间结果
+
+SHOW INDEX FROM orders;
+CREATE INDEX idx_orders_created_store_status ON orders (created_at, store_id, status);
+DROP INDEX idx_orders_created_store_status ON orders;
+
+EXPLAIN SELECT store_id, status, COUNT(*), SUM(total_amount)
+FROM orders
+WHERE created_at >= '2025-01-01'
+GROUP BY store_id, status;
+-- type		key			  rows	Extra
+-- ALL		[NULL]		98124	Using where; Using temporary
+-- 这里 created_at 是联合索引的第一列，而且你对它用了范围查询且命中的数据太多，这会导致后面的 GROUP BY store_id, status 无法使用索引
+
+
+-- 练习 9: ORDER BY 与 filesort。
+-- 作用：观察没有合适索引时，WHERE + ORDER BY 可能出现 Using filesort。
+-- 观察点：加 (pay_method, created_at) 后，过滤和排序更容易同时利用索引。
+EXPLAIN SELECT * FROM payments
+WHERE pay_method = 'CARD'
+ORDER BY created_at DESC
+LIMIT 20;
+-- 没有合适索引时，WHERE + ORDER BY 可能出现 Using filesort
+-- type		key			  rows	Extra
+-- ALL		[NULL]		89518	Using where; Using filesort
+
+SHOW INDEX FROM payments;
+CREATE INDEX idx_payments_method_created ON payments (pay_method, created_at);
+-- DROP INDEX idx_payments_method_created ON payments;
+
+EXPLAIN SELECT * FROM payments
+WHERE pay_method = 'CARD'
+ORDER BY created_at DESC
+LIMIT 20;
+-- 加 (pay_method, created_at) 后，过滤和排序更容易同时利用索引。
+-- type		key								            rows	Extra
+-- ref		idx_payments_method_created		35428	Using where; Backward index scan
+
+
