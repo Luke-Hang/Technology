@@ -170,33 +170,51 @@ SELECT COUNT(*) AS order_items_count FROM dbo.OrderItems;
 SELECT COUNT(*) AS payments_count FROM dbo.Payments;
 GO
 
+EXEC sp_helpindex N'dbo.Orders';
+-- DROP INDEX idx_orders_customer_created ON dbo.Orders;
+-- DROP INDEX idx_orders_customer_created_include ON dbo.Orders;
+-- DROP INDEX idx_orders_order_no ON dbo.Orders;
+-- DROP INDEX idx_orders_store_status_created ON dbo.Orders;
+-- DROP INDEX idx_orders_total_amount ON dbo.Orders;
+
 -- 练习 0: 主键和普通索引查询。
 -- 作用：观察主键等值查询通常是 Clustered Index Seek；普通索引等值查询通常是 Index Seek。
+EXEC sp_helpindex N'dbo.Customers';
+
 SELECT * FROM dbo.Customers WHERE id = 1;
+--主键查询 Clustered Index Seek [Customers].[PK_Customers]
 
 EXEC sp_helpindex N'dbo.Orders';
 CREATE INDEX idx_orders_order_no ON dbo.Orders(order_no);
 -- DROP INDEX idx_orders_order_no ON dbo.Orders;
 
 SELECT * FROM dbo.Orders WHERE order_no = N'ORD-00000001';
+--普通索引查询 Index Seek NonClustered [Orders].[idx_orders_order_no]
 GO
+
 
 -- 练习 1: 普通范围查询，索引不一定会被使用。
 -- 说明：total_amount > 4000 是范围查询，命中行数较多，并且 SELECT * 可能触发 Key Lookup，优化器可能选择扫描。
 SELECT * FROM dbo.Orders WHERE total_amount > 4000;
+--索引未建立使用主键索引 Clustered Index Scan [Orders].[PK_Orders]
 
 EXEC sp_helpindex N'dbo.Orders';
 CREATE INDEX idx_orders_total_amount ON dbo.Orders(total_amount);
 -- DROP INDEX idx_orders_total_amount ON dbo.Orders;
 
 SELECT * FROM dbo.Orders WHERE total_amount > 4000;
+--普通范围查询，索引不一定会被使用 Clustered Index Scan [Orders].[PK_Orders]
 
 -- 条件范围更小时，索引更可能真正生效。
 SELECT * FROM dbo.Orders WHERE total_amount BETWEEN 4900 AND 4910;
+--Index Seek NonClustered [Orders].[idx_orders_total_amount] + Key loop Clustered Index Scan [Orders].[PK_Orders]
+--普通索引 Index Seek + 回表 Key loop 使用主键索引
 
 -- 只查索引字段时，更容易形成覆盖索引，减少 Key Lookup。
 SELECT total_amount FROM dbo.Orders WHERE total_amount > 4000;
+--Index Seek NonClustered [Orders].[idx_orders_total_amount] + 不回表
 GO
+
 
 -- 练习 2: 联合索引的最左前缀。
 -- 作用：理解 (store_id, status, created_at) 为什么适合 store_id + status + created_at 排序/范围场景。
@@ -208,6 +226,7 @@ SELECT * FROM dbo.Orders
 WHERE store_id = 8 AND status = 3
 ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 20 ROWS ONLY;
+-- Index Seek NonClustered idx_orders_store_status_created + Key loop Clustered Index Scan [Orders].[PK_Orders]
 GO
 
 -- 练习 3: 不满足联合索引最左前缀。
@@ -216,6 +235,7 @@ SELECT * FROM dbo.Orders
 WHERE status = 3
 ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 20 ROWS ONLY;
+--Clustered Index Scan [Orders].[PK_Orders] 只有主键索引
 
 EXEC sp_helpindex N'dbo.Orders';
 CREATE INDEX idx_orders_status_created ON dbo.Orders(status, created_at);
@@ -225,32 +245,41 @@ SELECT * FROM dbo.Orders
 WHERE status = 3
 ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 20 ROWS ONLY;
+--Index Seek NonClustered [Orders].[idx_orders_status_created] + Key loop Clustered Index Scan [Orders].[PK_Orders]
+-- 普通索引 + 主键回表
 GO
+
 
 -- 练习 4: 函数或表达式导致索引难以利用。
 -- 作用：不要在索引列上包函数；CONVERT(date, created_at) 会让范围定位变差。
 SELECT * FROM dbo.Orders
 WHERE created_at >= '2025-01-01'
   AND created_at < '2025-01-02';
+-- Index Seek NonClustered [Orders].[idx_orders_status_created] + Key loop Clustered Index Scan [Orders].[PK_Orders]
 
 EXEC sp_helpindex N'dbo.Orders';
 CREATE INDEX idx_orders_created ON dbo.Orders(created_at);
 -- DROP INDEX idx_orders_created ON dbo.Orders;
 
 SELECT * FROM dbo.Orders
-WHERE CONVERT(date, created_at) = '2025-01-01';
-
-SELECT * FROM dbo.Orders
 WHERE created_at >= '2025-01-01'
   AND created_at < '2025-01-02';
+-- Index Seek NonClustered [Orders].[idx_orders_created] + Key loop Clustered Index Scan [Orders].[PK_Orders]
+
+SELECT * FROM dbo.Orders
+WHERE CONVERT(date, created_at) = '2025-01-01';
+-- Key loop Clustered Index Scan [Orders].[PK_Orders]
 GO
 
 -- 练习 5: 覆盖索引和 Key Lookup。
 -- 作用：查询字段都在非聚集索引里时，可以减少回表；SQL Server 执行计划里常见 Key Lookup。
+EXEC sp_helpindex N'dbo.Orders';
+
 SELECT customer_id, created_at FROM dbo.Orders
 WHERE customer_id = 123
 ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+--Clustered Index Scan [Orders].[PK_Orders]
 
 EXEC sp_helpindex N'dbo.Orders';
 CREATE INDEX idx_orders_customer_created ON dbo.Orders(customer_id, created_at);
@@ -260,6 +289,13 @@ SELECT customer_id, created_at FROM dbo.Orders
 WHERE customer_id = 123
 ORDER BY created_at DESC
 OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY;
+-- Index Seek NonClustered [Orders] [idx_orders_customer_created]
+
+-- INCLUDE 可以让索引覆盖更多返回列，减少 Key Lookup。
+-- 把一些“只需要返回、但不参与查找和排序”的字段，也存进非聚集索引里，从而减少 Key Lookup（回表）。
+EXEC sp_helpindex N'dbo.Orders';
+CREATE INDEX idx_orders_customer_created_include ON dbo.Orders(customer_id, created_at) INCLUDE (order_no, total_amount, status)
+
 
 -- INCLUDE 可以让索引覆盖更多返回列，减少 Key Lookup。
 -- 把一些“只需要返回、但不参与查找和排序”的字段，也存进非聚集索引里，从而减少 Key Lookup（回表）。
@@ -309,6 +345,16 @@ WHERE o.store_id = 8
   AND o.created_at < '2025-02-01'
 ORDER BY o.created_at DESC
 OFFSET 0 ROWS FETCH NEXT 50 ROWS ONLY;
+--未加索引前
+--Clustered Index Scan [Payments].[PK_Payments] [p]
+
+--加索引后
+-- key Lookup Clustered [Payments].[PK_Payments] [p] 
+-- + Index Seek NonClustered [Payments].[idx_payments_order] [p]
+-- + Clustered Index Scan [Customers].[PK_Customers] [c]
+-- + key Lookup Clustered [Orders].[PK_Orders] [o]
+-- + Index Seek NonClustered [Orders].[idx_orders_store_status_created] [o]
+CREATE INDEX idx_payments_order ON dbo.Payments(order_id);
 GO
 
 -- 练习 7: LIKE 前缀匹配和前置通配符。
@@ -377,6 +423,7 @@ GO
 --
 -- 5. 范围查询后面的联合索引列难以继续用于精确过滤或排序。
 --    示例：索引是 (created_at, store_id, status)，WHERE created_at > '2025-01-01' AND store_id = 8
+只回答前5个就够了
 --
 -- 6. SELECT * 导致大量 Key Lookup，索引收益下降。
 --    改法：只查询必要字段，或使用 INCLUDE 设计覆盖索引。

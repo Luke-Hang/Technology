@@ -25,7 +25,7 @@ MySQL 优化我一般从四个方面考虑：SQL 层面、索引层面、表和�
   3.3 避免使用 JOIN 关联太多表
     同一个 SQL 多关联（join）一个表，就会多分配一个关联缓存，SQL 中关联的表越多，所占用的内存也就越大
     MySQL 最多允许关联 61 个表，但建议不超过 5 个
-  3.4对于大数据量的分页查询，避免使用 LIMIT pageSize OFFSET offset 改用基于上一页最后一条记录,做游标分页
+  3.4对于大数据量的分页查询，避免使用 LIMIT pageSize OFFSET offset 改用 基于上一页最后一条记录,做游标分页
     SELECT * FROM orders ORDER BY id LIMIT pageSize OFFSET offset; 
       pageSize   每页显示记录数
       OFFSET=(pageNum - 1) * pageSize   偏移量
@@ -409,11 +409,11 @@ ON orders (store_id, status, created_at);
 
 Java 后端面试建议重点讲扎实这几块：
 
-- `EXPLAIN` 怎么看。
+- `EXPLAIN` 怎么看。- type key row extra
 - 联合索引和最左匹配原则。
 - 覆盖索引和回表。
-- 索引失效场景。
-- 大分页优化。
+- 索引失效场景。-左函配转范-坐寒配软饭
+- 大分页优化。-SELECT * FROM orders WHERE id > lastPageLastId ORDER BY id LIMIT 10; lastPageLastId(上一页最后一条记录的 id)
 - 慢 SQL 定位流程。
 
 架构层面作为补充，不要讲得太虚。面试官大概率会继续追问 SQL 和索引细节，比如为什么这个联合索引这样设计、什么情况下不走索引、覆盖索引为什么能减少回表。
