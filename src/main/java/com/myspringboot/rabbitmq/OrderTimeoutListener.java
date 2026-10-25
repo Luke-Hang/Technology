@@ -12,7 +12,10 @@ public class OrderTimeoutListener {
     @Autowired
     private OrderTimeoutService orderService;
 
-    // 只监听取消队列。等待队列必须让消息停留到 TTL 到期。
+    /**
+     * Spring 为 @RabbitListener 创建的后台线程持续从取消队列 CANCEL_QUEUE 拉取消息
+     * 收到后调用 OrderTimeoutListener#onTimeout() 方法处理。
+     */
     @RabbitListener(queues = OrderTimeoutRabbitConfig.CANCEL_QUEUE)
     public void onTimeout(String orderId) {
         orderService.cancelIfUnpaid(orderId);

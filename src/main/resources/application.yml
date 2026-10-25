@@ -13,13 +13,15 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092,localhost:9093
-    template:
-      default-topic: host-delete
+    delete-topic: host-delete
     consumer:
       group-id: person-info-change-group
+      enable-auto-commit: false
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
 
 #单Redis
 #  redis:

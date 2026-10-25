@@ -24,7 +24,7 @@ public class CmdbkafkaService {
     @Autowired
     private ObjectMapper mapper;
 
-    @Value("${spring.kafka.template.default-topic}")
+    @Value("${spring.kafka.delete-topic}")
     private String topic;
 
     public CompletableFuture<RecordMetadata> sendDeleteHostMessage(String hostId) {
@@ -43,7 +43,7 @@ public class CmdbkafkaService {
         CompletableFuture<RecordMetadata> result = new CompletableFuture<>();
         try {
             kafkaTemplate.send(topic, key, data).addCallback(
-sent -> result.complete(sent.getRecordMetadata()),
+                    sent -> result.complete(sent.getRecordMetadata()),
                     result::completeExceptionally);
 
             // 等价的匿名内部类写法，仅供对照：
