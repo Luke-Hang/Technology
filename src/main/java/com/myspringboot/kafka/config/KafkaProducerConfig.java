@@ -1,65 +1,39 @@
 package com.myspringboot.kafka.config;
 
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author xiehang
- * @date 2023/10/9 22:06
- */
-@Configurable
+@Configuration
 public class KafkaProducerConfig {
-
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    /**
-     * kafka可以认为是一个横跨
-     * @return
-     */
     @Bean
-    protected Map<String,Object> hisProducerConfigs(){
+    public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootstrapServers);// 指定 Kafka 集群的地址
-        //props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");// Kafka集群的地址列表
-        //指定键和值的序列化方式，这里使用的是 StringSerializer
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-
-        props.put(ProducerConfig.RETRIES_CONFIG, 3);//设置重试次数，避免因网络问题导致消息丢失。
-        props.put(ProducerConfig.RECONNECT_BACKOFF_MS_CONFIG,1000);//消息发送失败后，重试之间的等待时间为1000ms。
-
-        props.put(ProducerConfig.ACKS_CONFIG, "all");//设置 acks=all 控制消息的持久化程度，等待所有副本确认。
-        props.put("min.insync.replicas","2");//确保消息至少被写入到 2 个副本中
-        props.put("replication.factor","3");//推荐设置成 replication.factor = min.insync.replicas + 1
-
-        //配置 unclean.leader.election.enable = false,当 leader
-        // 副本发生故障时就不会从 follower 副本中和 leader 同步程度达不到要求的副本中选择出 leader ，这样降低了消息丢失的可能性
-        props.put("unclean.leader.election.enable", "false"); // 禁止不完整的leader选举
-        return props;
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        // Retry transient send failures.
+        props.put(ProducerConfig.RETRIES_CONFIG, 3);
+        props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
+        props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 10000);
+        props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 10000);
+        props.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1);
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
-    /**
-     * kafaka生产者配置
-     * @return
-     */
     @Bean
-    protected ProducerFactory<String,String> producerFactory(){
-        return new DefaultKafkaProducerFactory<>(hisProducerConfigs());
-    }
-    @Bean
-    protected KafkaTemplate<String,String> KafkaTemplate(){
+    public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }
