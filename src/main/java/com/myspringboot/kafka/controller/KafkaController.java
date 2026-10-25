@@ -55,9 +55,11 @@ public class KafkaController {
      *  没消息：等待到超时时间后返回空结果，再继续下一轮。
      *
      * 总结：
-     *      Spring 为 @KafkaListener 创建的后台线程持续从 delete-topic  配置对应的 Topic（这里是 host-delete）拉取消息，
+     *      Spring 为 @KafkaListener 创建的后台线程，主动持续从 delete-topic 配置对应的 Topic（这里是 host-delete）拉取消息，
      *      收到后调用 KafkaController.consume() 方法处理。
+     *      @KafkaListener：消费者后台持续调用 poll()，主动从 Kafka 拉取消息
      *
+     *      Kafka：消费者订阅 Topic → 消费者主动拉取消息 → 消费者处理。
      */
     // 由 Kafka 自动触发，不是 HTTP 接口。
     @KafkaListener(topics = "${spring.kafka.delete-topic}", groupId = "${spring.kafka.consumer.group-id}")
