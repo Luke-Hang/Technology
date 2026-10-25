@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
  *  我们项目是一个内部部署平台，每次部署会产生部署记录和日志，需要定期清理一年前的数据。
  *  使用 Spring 的定时任务，每天凌晨 2 点触发。
  *  考虑到平台部署了多个实例，各实例都会触发任务，所以通过 Redisson 分布式锁，避免多个实例同时清理，增加数据库压力和锁竞争
+ *  锁主要是避免并发执行
  *  所有实例使用相同的锁名，调用 tryLock(0, TimeUnit.SECONDS)，不等待锁，失败直接跳过，成功才执行清理。
  *  考虑到清理耗时不固定，没有指定租期，而是使用 Redisson 看门狗自动续期机制，避免任务没执行完锁就过期。
  *  清理耗时会随数据量变化，因此没有设置固定租期，而是使用 Redisson 看门狗自动续期。
@@ -50,21 +51,18 @@ public class TimeTaskByRedission {
          * 考虑到清理耗时不固定，我们没有指定租期，使用看门狗自动续期
          * 如果使用 lock.tryLock(0, 30, TimeUnit.SECONDS); 变成固定 30 秒租期，不会使用看门狗自动续期
          */
-        RLock lock = redissonClient.getLock(LOCK_KEY);
+        RLock rLock = redissonClient.getLock(LOCK_KEY);
 //        locked 记录当前这次执行有没有成功拿到锁，初始为 false，最后决定是否需要释放。
         boolean locked = false;
 //        System.nanoTime() 用于计算耗时。它不是当前日期时间，后面会用“结束值减开始值”得到执行时长。
         long startedAt = System.nanoTime();
         try {
-            //  tryLock() 尝试获取锁，拿到锁返回 true ，没拿到锁 返回 false
-            //  0, TimeUnit.SECONDS 表示等待时间为 0 秒，拿不到就直接返回
-            //  清理任务没必要排队。其他实例正在执行时，本实例跳过即可，避免等待后又执行一轮清理。
-
-            //  lock.tryLock(0, 30, TimeUnit.SECONDS);指定租期,显式指定租期后，不会启用看门狗自动续期
-            //  lock.tryLock(0, TimeUnit.SECONDS); 不指定续期
-            //  没有指定锁的租期，因此拿到锁后，Redisson 会通过看门狗机制自动续期，不需要自己启动续期线程。
-            //  当前超时时间为 30 秒，后台通常约每 10 秒校验持有者，并把锁的有效期重新延长到 30 秒，完全解锁后停止续期。
-            locked = lock.tryLock(0, TimeUnit.SECONDS);
+            //rLock.tryLock(0, TimeUnit.SECONDS); 尝试获取锁，拿到锁返回 true ，没拿到锁 返回 false
+            //0 表示等待锁的时间为零，单位是秒。立即尝试获取锁，成功返回 true，失败返回 false，不排队等待。
+            //清理任务不需要每个实例都执行，所以拿不到就跳过。
+            //  rLock.tryLock(0, 30, TimeUnit.SECONDS);指定租期,显式指定租期后，不会启用看门狗自动续期
+            //  rLock.tryLock(0, TimeUnit.SECONDS); 不指定续期，Redisson 会通过看门狗机制自动续期，不需要自己启动续期线程。
+            locked = rLock.tryLock(0, TimeUnit.SECONDS);
             if (!locked) {
                 //没拿到锁，跳过任务
                 logger.info("其他实例正在清理数据，跳过本次任务");
@@ -79,13 +77,18 @@ public class TimeTaskByRedission {
         } catch (Exception e) {
             logger.error("清理任务执行失败", e);
         } finally {
-            //任务正常完成或发生异常，都会进入 finally，确认当前线程仍持有锁后释放
+            //任务正常完成或发生异常，都进入 finally，尝试释放锁
+            //进程被强制终止或宕机时，不能依赖 finally，需要靠锁过期释放。
             if (locked) {
-                releaseLock(lock);
+                releaseLock(rLock);
             }
         }
     }
 
+    /**
+     *
+     * 释放锁
+     */
     private void releaseLock(RLock lock) {
         try {
             if (lock.isHeldByCurrentThread()) {
