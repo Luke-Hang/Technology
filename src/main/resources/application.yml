@@ -77,3 +77,12 @@ data-sync:
 
 
 
+
+# Redisson 清理任务：每天北京时间凌晨 2 点执行。
+# Jedis 与 Redisson 是两套独立示例，同一业务请选择其中一种。
+cleanup:
+  execution:
+    enabled: true
+    cron: "0 0 2 * * ?"
+    zone: Asia/Shanghai
+    watchdog-timeout: 30000

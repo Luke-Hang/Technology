@@ -93,7 +93,8 @@ public class RedisServiceImpl implements RedisService {
 
     @Override
     public void deleteOverExes() {
-        //循环删除，每次删除5000条数据
+        //采用分批删除，控制每批数量和事务大小，并为清理查询配置合适索引，避免一次删除大量数据造成长事务和锁竞争。必要时批次间增加间隔，控制数据库负载。
+        //这是需要通过执行耗时、数据库负载和锁等待情况调整的参数，不是固定标准。
     }
 
     private List<UserModel> getPersonList() {

@@ -1,68 +1,101 @@
 package com.redis.Impl;
 
 import com.redis.service.RedisService;
-import org.redisson.Redisson;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+/** 清理一年前数据的定时任务；删除条件和分批处理由业务服务负责。 */
+
+
 /**
- * @author xiehang
- * @date 2025/3/1 14:21
+ *  我们项目是一个内部部署平台，每次部署会产生部署记录和日志，需要定期清理一年前的数据。
+ *  使用 Spring 的定时任务，每天凌晨 2 点触发。
+ *  考虑到平台部署了多个实例，各实例都会触发任务，所以通过 Redisson 分布式锁，避免多个实例同时清理，增加数据库压力和锁竞争
+ *  所有实例使用相同的锁名，调用 tryLock(0, TimeUnit.SECONDS)，不等待锁，失败直接跳过，成功才执行清理。
+ *  考虑到清理耗时不固定，没有指定租期，而是使用 Redisson 看门狗自动续期机制，避免任务没执行完锁就过期。
+ *  清理耗时会随数据量变化，因此没有设置固定租期，而是使用 Redisson 看门狗自动续期。
+ *  最后在 finally 中确认当前线程仍持有锁，再释放锁。
  */
+
 @Component
+@ConditionalOnProperty(prefix = "cleanup.execution", name = "enabled", havingValue = "true")
 public class TimeTaskByRedission {
 
-    @Value("${spring.jedis.cluster.nodes}")
-    private String clusterNodes;
+    private static final Logger logger = LoggerFactory.getLogger(TimeTaskByRedission.class);
+    // 与 Jedis 示例隔离：两种锁的数据结构不同，不能共用同一个 key。
+    private static final String LOCK_KEY = "technology:cleanup:execution:redisson:lock";
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Autowired
     private RedisService redisService;
 
-    private static String SCHEDULED_ENV_LOCK = "ScheduledEnvLock";
-
-    /**
-     * Redisson 分布式锁的核心原理
-     *  1.加锁过程
-     *      使用 Redis 的 SETNX 命令实现加锁操作，并设置锁的过期时间防止死锁
-     *          SETNX 命令如果键key不存在的话，该命令的返回值为1表示设置成功，即获取锁，确保只有一个客户端能成功加锁
-     *  2.自动续期机制，
-     *      当线程成功获取锁后，Redisson 会启动一个后台任务，定期检查锁的状态
-     *      并通过调用 Redis 的 EXPIRE 命令延长锁的过期时间
-     *      当锁被释放或任务完成时，Redisson 会停止续期任务
-     */
-    public void deleteOverExes() throws InterruptedException {
-        //配置 Redisson 客户端
-        Config config = new Config();
-        config.useClusterServers().addNodeAddress(clusterNodes);
-        RedissonClient redisson = Redisson.create(config);
-
-        //获取分布式锁
-        RLock lock = redisson.getLock(SCHEDULED_ENV_LOCK);
-
-        // 尝试加锁，最多等待 10 秒，锁的有效期为 30 秒
-        boolean isLock = lock.tryLock(10, 30, TimeUnit.SECONDS);
+    /** 默认每天北京时间凌晨 2 点执行；所有实例使用相同的锁名。 */
+    @Scheduled(cron = "${cleanup.execution.cron:0 0 2 * * ?}", zone = "${cleanup.execution.zone:Asia/Shanghai}")
+    public void deleteOverExes() {
+        /**
+         * 通过 Redisson 提供的 redissonClient 获取一个 RLock 对象，后面用它加锁和解锁
+         * 这一步还没有拿到锁。 可以理解为先确定“大家要争抢哪一把锁”。
+         * 多个服务实例必须连接同一个 Redis 集群，并使用同样的 LOCK_KEY，才能竞争同一把锁。
+         * 没有指定租期，因此启用看门狗。 0 表示不等待锁。
+         * 考虑到清理耗时不固定，我们没有指定租期，使用看门狗自动续期
+         * 如果使用 lock.tryLock(0, 30, TimeUnit.SECONDS); 变成固定 30 秒租期，不会使用看门狗自动续期
+         */
+        RLock lock = redissonClient.getLock(LOCK_KEY);
+//        locked 记录当前这次执行有没有成功拿到锁，初始为 false，最后决定是否需要释放。
+        boolean locked = false;
+//        System.nanoTime() 用于计算耗时。它不是当前日期时间，后面会用“结束值减开始值”得到执行时长。
+        long startedAt = System.nanoTime();
         try {
-            if (isLock) {
-                System.out.println("成功获取锁！");
-                try {
-                    //执行删除任务，假设删除操作耗时40000毫秒，超过初始锁的过期时间
-                    redisService.deleteOverExes();
-                } finally {
-                    lock.unlock();// 释放锁
-                    System.out.println("成功释放锁！");
-                }
-            } else {
-                System.out.println("未能获取锁！");
+            //  tryLock() 尝试获取锁，拿到锁返回 true ，没拿到锁 返回 false
+            //  0, TimeUnit.SECONDS 表示等待时间为 0 秒，拿不到就直接返回
+            //  清理任务没必要排队。其他实例正在执行时，本实例跳过即可，避免等待后又执行一轮清理。
+
+            //  lock.tryLock(0, 30, TimeUnit.SECONDS);指定租期,显式指定租期后，不会启用看门狗自动续期
+            //  lock.tryLock(0, TimeUnit.SECONDS); 不指定续期
+            //  没有指定锁的租期，因此拿到锁后，Redisson 会通过看门狗机制自动续期，不需要自己启动续期线程。
+            //  当前超时时间为 30 秒，后台通常约每 10 秒校验持有者，并把锁的有效期重新延长到 30 秒，完全解锁后停止续期。
+            locked = lock.tryLock(0, TimeUnit.SECONDS);
+            if (!locked) {
+                //没拿到锁，跳过任务
+                logger.info("其他实例正在清理数据，跳过本次任务");
+                return;
             }
+            logger.info("开始清理一年前的执行记录和执行信息");
+            redisService.deleteOverExes();
+            logger.info("清理任务完成，耗时 {} ms", TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("清理任务等待锁时被中断", e);
+        } catch (Exception e) {
+            logger.error("清理任务执行失败", e);
         } finally {
-            // 关闭 Redisson 客户端
-            redisson.shutdown();
+            //任务正常完成或发生异常，都会进入 finally，确认当前线程仍持有锁后释放
+            if (locked) {
+                releaseLock(lock);
+            }
+        }
+    }
+
+    private void releaseLock(RLock lock) {
+        try {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            } else {
+                logger.warn("清理任务结束时已失去锁，请检查续期及任务重复执行情况");
+            }
+        } catch (Exception e) {
+            // 即使检查时还持有锁，解锁前也可能因故障失去锁。
+            logger.error("释放清理任务锁失败", e);
         }
     }
 }

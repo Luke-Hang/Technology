@@ -1,6 +1,7 @@
 package com.myspringboot;
 
-import com.myspringboot.springcloud.model.Dept;
+import com.redis.config.ExecutionCleanupConfig;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 //开启自动配置
@@ -12,6 +13,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 //@SpringCloudApplication
 //@SpringBootApplication(scanBasePackages = "com.myspringboot")
 @SpringBootApplication
+@Import(ExecutionCleanupConfig.class)
 public class TechnologyApplication {
     public static void main(String[] args) {
         SpringApplication.run(TechnologyApplication.class, args);
