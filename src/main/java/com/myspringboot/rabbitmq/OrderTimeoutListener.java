@@ -19,7 +19,7 @@ public class OrderTimeoutListener {
      * 消费者先订阅队列，RabbitMQ 再主动将消息推送给消费者
      *
      * RabbitMQ：消费者先订阅队列，然后由 RabbitMQ 主动推送消息给消费者，再由消费者消费消息
-     * RabbitMQ：消费先者订阅队列 → RabbitMQ 推送消息 → 消费者处理。
+     * RabbitMQ：消费先者订阅队列 → RabbitMQ 主动推送消息 → 消费者消费消息。
      */
     // 只监听取消队列。等待队列必须让消息停留到 TTL 到期。
     @RabbitListener(queues = OrderTimeoutRabbitConfig.CANCEL_QUEUE)
