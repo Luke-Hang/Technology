@@ -26,10 +26,40 @@ MySQL 优化我一般从四个方面考虑：SQL 层面、索引层面、表和�
     同一个 SQL 多关联（join）一个表，就会多分配一个关联缓存，SQL 中关联的表越多，所占用的内存也就越大
     MySQL 最多允许关联 61 个表，但建议不超过 5 个
   3.4对于大数据量的分页查询，避免使用 LIMIT pageSize OFFSET offset 改用 基于上一页最后一条记录,做游标分页
-    SELECT * FROM orders ORDER BY id LIMIT pageSize OFFSET offset; 
+    SELECT * FROM orders ORDER BY id LIMIT pageSize(返回记录数量) OFFSET (偏移记录数量); 
       pageSize   每页显示记录数
       OFFSET=(pageNum - 1) * pageSize   偏移量
     SELECT * FROM orders ORDER BY id LIMIT OFFSET，pageSize; (这种写法和上面那种话写法都可以，种种写法OFFSET，pageSize 之间的逗号不能丢)
+      这块有2种写法
+        1.LIMIT + OFFSET
+        LIMIT count OFFSET offset
+        LIMIT 返回记录数量 OFFSET 跳过记录数量;
+
+          SELECT *
+          FROM Employee
+          ORDER BY salary DESC
+          LIMIT 10 OFFSET 20; 
+
+          --按照 salary 降序排列，跳过前 20 条记录，返回接下来的 10 条记录。也就是返回按照 salary 降序排序后的 21-30条
+          
+          
+        2.LIMIT offset, count
+          SELECT *
+          FROM Employee
+          ORDER BY salary DESC
+          LIMIT LIMIT 20, 10; 
+
+        3.只用 LIMIT
+        SELECT *
+        FROM Employee
+        LIMIT 10;
+        --从第一条开始，返回前 10 条记录，LIMIT 10 不等于 LIMIT 10 OFFSET 10，前者没有跳过记录，默认从第一条开始
+
+        实际项目中：
+          查询前几条数据 LIMIT count：LIMIT 10                             返回前 10 条
+          普通分页 LIMIT offset, count：LIMIT 20, 10                      跳过 20 条，返回 10 条
+          指定偏移量分页 LIMIT count OFFSET offset ：LIMIT 10 OFFSET 20    跳过 20 条，返回 10 条
+
     SELECT * FROM orders ORDER BY id LIMIT 10 OFFSET 20 == SELECT * FROM orders ORDER BY id LIMIT 20，10
       LIMIT 10 = 每页取 10 条，OFFSET 20 = 偏移（跳过）前 20 条。每页取 10 条，偏移（跳过）前 20 条，也就是查询排序后的第 21～30 条数据
     SELECT * FROM orders ORDER BY id LIMIT 10 OFFSET 10,0000===SELECT * FROM orders ORDER BY id LIMIT 10,0000, 10;
