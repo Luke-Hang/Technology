@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class TimeTaskByRedission {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeTaskByRedission.class);
-    // 与 Jedis 示例隔离：两种锁的数据结构不同，不能共用同一个 key。
+    // 所有实例使用同一个锁名，避免并发执行清理任务。
     private static final String LOCK_KEY = "technology:cleanup:execution:redisson:lock";
 
     @Autowired

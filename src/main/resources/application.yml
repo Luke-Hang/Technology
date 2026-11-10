@@ -37,8 +37,6 @@ spring:
     cluster:
       nodes: 192.168.126.129:7000,192.168.126.129:7001,192.168.126.129:7002,192.168.126.129:7003,192.168.126.129:7004
     password: 123
-    expirationTime: 30000
-    renewalTime: 5000
     pool:
       max-active: 200
       # 连接池最大阻塞等待时间（使用负值表示没有限制）
@@ -83,7 +81,6 @@ data-sync:
 
 
 # Redisson 清理任务：每天北京时间凌晨 2 点执行。
-# Jedis 与 Redisson 是两套独立示例，同一业务请选择其中一种。
 cleanup:
   execution:
     enabled: true

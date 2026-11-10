@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
 
-/** 显式导入所需组件，避免为示例扫描整个 com.redis 包并启动 Jedis 任务。 */
+/** 显式导入清理任务所需组件，避免扫描整个 com.redis 包。 */
 @Configuration
 @EnableScheduling
 @Import({TimeTaskByRedission.class, RedisServiceImpl.class})
