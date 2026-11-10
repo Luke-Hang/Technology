@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit;
  *  使用 Spring 的定时任务，每天凌晨 2 点触发。
  *  考虑到平台部署了多个实例，各实例都会触发任务，所以通过 Redisson 分布式锁，避免多个实例同时清理，增加数据库压力和锁竞争
  *  锁主要是避免并发执行
- *  所有实例使用相同的锁名，调用 tryLock(0, TimeUnit.SECONDS)，不等待锁，失败直接跳过，成功才执行清理。
- *  考虑到清理耗时不固定，没有指定租期，而是使用 Redisson 看门狗自动续期机制，避免任务没执行完锁就过期。
- *  清理耗时会随数据量变化，因此没有设置固定租期，而是使用 Redisson 看门狗自动续期。
- *  最后在 finally 中确认当前线程仍持有锁，再释放锁。
+ *      所有实例使用相同的锁名 ScheduledLock ，调用 tryLock(0, TimeUnit.SECONDS)，不等待锁，失败直接跳过，成功才执行清理。
+ *      考虑到清理耗时不固定，没有指定租期，而是使用 Redisson 看门狗自动续期机制，避免任务没执行完锁就过期。
+ *      清理耗时会随数据量变化，因此没有设置固定租期，而是使用 Redisson 看门狗自动续期。
+ *      最后在 finally 中确认当前线程仍持有锁，再释放锁。
  */
 
 @Component
@@ -32,7 +32,7 @@ public class TimeTaskByRedission {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeTaskByRedission.class);
     // 所有实例使用同一个锁名，避免并发执行清理任务。
-    private static final String LOCK_KEY = "technology:cleanup:execution:redisson:lock";
+    private static final String LOCK_KEY = "ScheduledLock";
 
     @Autowired
     private RedissonClient redissonClient;
@@ -46,7 +46,7 @@ public class TimeTaskByRedission {
         /**
          * 通过 Redisson 提供的 redissonClient 获取一个 RLock 对象，后面用它加锁和解锁
          * 这一步还没有拿到锁。 可以理解为先确定“大家要争抢哪一把锁”。
-         * 多个服务实例必须连接同一个 Redis 集群，并使用同样的 LOCK_KEY，才能竞争同一把锁。
+         * 多个服务实例必须连接同一个 Redis 集群，并使用同样的 LOCK_KEY=ScheduledLock，才能竞争同一把锁。
          * 没有指定租期，因此启用看门狗。 0 表示不等待锁。
          * 考虑到清理耗时不固定，我们没有指定租期，使用看门狗自动续期
          * 如果使用 lock.tryLock(0, 30, TimeUnit.SECONDS); 变成固定 30 秒租期，不会使用看门狗自动续期
